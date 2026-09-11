@@ -1,19 +1,7 @@
 import { useState } from "react";
-
-import type { Route } from "./+types/add-product";
 import { AddProductForm } from "~/components/add-product-form";
 import { SiteHeader } from "~/components/site-header";
 import { createProduct, type CreateProductInput } from "~/lib/products";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Legg til produkt | Hjemmelagde Ting" },
-    {
-      name: "description",
-      content: "Legg til nytt produkt med bilde og status.",
-    },
-  ];
-}
 
 export default function AddProduct() {
   const [isCreating, setIsCreating] = useState(false);

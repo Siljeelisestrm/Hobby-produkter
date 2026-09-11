@@ -1,21 +1,9 @@
 import { useEffect, useState } from "react";
-
-import type { Route } from "./+types/home";
 import { SiteHeader } from "~/components/site-header";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
 import { deleteProduct, fetchProducts } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Hjemmelagde Ting" },
-    {
-      name: "description",
-      content: "Personlig oversikt over hjemmelagde prosjekter og salgsstatus.",
-    },
-  ];
-}
 
 export default function Home() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);

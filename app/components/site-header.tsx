@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink } from "react-router-dom";
 
 const LOGO_SRC = "images/logo.png";
 

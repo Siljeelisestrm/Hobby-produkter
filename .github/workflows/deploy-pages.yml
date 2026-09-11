@@ -33,18 +33,16 @@ jobs:
       - run: pnpm build
       - name: Create 404 fallback
         run: |
-          if [ -f build/client/index.html ]; then
-            cp build/client/index.html build/client/404.html
-          elif [ -f build/client/Hobby-produkter/index.html ]; then
-            cp build/client/Hobby-produkter/index.html build/client/404.html
+          if [ -f dist/index.html ]; then
+            cp dist/index.html dist/404.html
           else
-            echo "Fant ikke index.html i build/client. Avbryter deploy."
-            find build/client -maxdepth 4 -type f | sort
+            echo "Fant ikke index.html i dist. Avbryter deploy."
+            find dist -maxdepth 4 -type f | sort
             exit 1
           fi
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build/client
+          path: dist
 
   deploy:
     needs: build

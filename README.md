@@ -15,6 +15,11 @@ pnpm dev
 
 Kjører lokalt på `http://localhost:5173`.
 
+## Publisering på GitHub Pages
+
+Prosjektet er satt opp som en vanlig Vite SPA med base path `/Hobby-produkter/`.
+Deploy-workflowen bygger til `dist/` og publiserer automatisk via GitHub Actions.
+
 ## Supabase-oppsett
 
 1. Kjør SQL fra `supabase/products.sql` i **Supabase SQL Editor**.
