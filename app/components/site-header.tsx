@@ -76,28 +76,34 @@ export function SiteHeader() {
             }}
             aria-hidden="true"
           />
-          <NavLink to="/" end className={navClassName}>
-            Min side
-          </NavLink>
           <NavLink to="/utforsk" className={navClassName}>
-            Utforsk
+            <span className="site-nav__icon" aria-hidden="true">
+              🧭
+            </span>
+            <span className="site-nav__text">Utforsk</span>
+          </NavLink>
+          <NavLink to="/favoritter" className={navClassName}>
+            <span className="site-nav__icon" aria-hidden="true">
+              ♡
+            </span>
+            <span className="site-nav__text">Favoritter</span>
+          </NavLink>
+          <NavLink to="/brukere" className={navClassName}>
+            <span className="site-nav__icon" aria-hidden="true">
+              👥
+            </span>
+            <span className="site-nav__text">Brukere</span>
+          </NavLink>
+          <NavLink to="/" end className={navClassName}>
+            <span className="site-nav__icon" aria-hidden="true">
+              👤
+            </span>
+            <span className="site-nav__text">Min side</span>
           </NavLink>
         </nav>
 
         {user ? (
           <div className="site-user">
-            <NavLink
-              to="/favoritter"
-              className={({ isActive }) =>
-                isActive
-                  ? "header-icon-link header-icon-link--active"
-                  : "header-icon-link"
-              }
-              aria-label="Favoritter"
-              title="Favoritter"
-            >
-              ❤
-            </NavLink>
             <span className="site-user__name">{profile?.username ?? user.email}</span>
             <button
               type="button"

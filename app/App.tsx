@@ -5,6 +5,8 @@ import { AuthProvider } from "~/context/auth-context";
 import ExplorePage from "~/routes/explore";
 import FavoritesPage from "~/routes/favorites";
 import HomePage from "~/routes/home";
+import UserProfilePage from "~/routes/user-profile";
+import UsersPage from "~/routes/users";
 import { SiteHeader } from "~/components/site-header";
 import "./app.css";
 
@@ -21,11 +23,20 @@ const routeMeta: Record<string, { title: string; description: string }> = {
     title: "Favoritter | Hjemmelagde Ting",
     description: "Produkter du har markert som favoritt.",
   },
+  "/brukere": {
+    title: "Brukere | Hjemmelagde Ting",
+    description: "Utforsk brukere og deres delte produkter.",
+  },
 };
 
 function DocumentMeta() {
   const location = useLocation();
-  const meta = routeMeta[location.pathname] ?? routeMeta["/"];
+  const meta = location.pathname.startsWith("/profil/")
+    ? {
+        title: "Brukerprofil | Hjemmelagde Ting",
+        description: "Se delte produkter og profilinformasjon for en bruker.",
+      }
+    : (routeMeta[location.pathname] ?? routeMeta["/"]);
 
   useEffect(() => {
     document.title = meta.title;
@@ -54,6 +65,9 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/utforsk" element={<ExplorePage />} />
           <Route path="/favoritter" element={<FavoritesPage />} />
+          <Route path="/profil" element={<Navigate to="/" replace />} />
+          <Route path="/profil/:username" element={<UserProfilePage />} />
+          <Route path="/brukere" element={<UsersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

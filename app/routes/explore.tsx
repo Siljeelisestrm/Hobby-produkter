@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AuthForm } from "~/components/auth-form";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
@@ -99,6 +100,11 @@ export default function Explore() {
         <section className="intro">
           <h1>Utforsk</h1>
           <p>Produkter som brukere har delt med venner.</p>
+          <div className="intro-actions">
+            <Link className="secondary-button" to="/brukere">
+              Se alle brukere
+            </Link>
+          </div>
         </section>
 
         {!isAuthLoading && !user ? (
@@ -139,6 +145,11 @@ export default function Explore() {
                 showOwner
                 showLikes
                 showStatus={false}
+                ownerProfileHref={
+                  project.ownerUsername
+                    ? `/profil/${encodeURIComponent(project.ownerUsername)}`
+                    : undefined
+                }
                 onSelect={setSelectedProject}
               />
             ))}

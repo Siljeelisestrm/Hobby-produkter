@@ -291,6 +291,51 @@ export async function fetchSharedProducts(
   });
 }
 
+export async function fetchSharedProductsByOwner(
+  ownerId: string,
+  currentUserId?: string,
+): Promise<ProjectItem[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+    )
+    .eq("owner_id", ownerId)
+    .eq("is_shared", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Klarte ikke hente delte produkter: ${error.message}`);
+  }
+
+  const projects = (data as ProductRow[]).map(mapProductRow);
+  if (projects.length === 0) {
+    return projects;
+  }
+
+  const [{ data: profileRow, error: profileError }, projectsWithLikes] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, username, avatar_url")
+        .eq("id", ownerId)
+        .maybeSingle(),
+      attachLikeMetadata(projects, currentUserId),
+    ]);
+
+  if (profileError) {
+    throw new Error(`Klarte ikke hente profil: ${profileError.message}`);
+  }
+
+  const ownerProfile = profileRow as ProfileRow | null;
+  return projectsWithLikes.map((project) => ({
+    ...project,
+    ownerUsername: ownerProfile?.username ?? "Ukjent bruker",
+    ownerAvatarUrl: ownerProfile?.avatar_url ?? undefined,
+  }));
+}
+
 export async function createProduct(input: CreateProductInput): Promise<ProjectItem> {
   const supabase = getSupabaseClient();
   const imageUrls =

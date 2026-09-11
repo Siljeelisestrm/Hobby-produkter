@@ -1,3 +1,5 @@
+import type { KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
 import type { ProjectItem } from "~/types/project";
 import {
   formatCurrencyNok,
@@ -7,11 +9,12 @@ import {
 
 type ProjectCardProps = {
   project: ProjectItem;
-  onSelect: (project: ProjectItem) => void;
+  onSelect?: (project: ProjectItem) => void;
   showOwner?: boolean;
   showLikes?: boolean;
   showStatus?: boolean;
   showShareState?: boolean;
+  ownerProfileHref?: string;
 };
 
 export function ProjectCard({
@@ -21,16 +24,36 @@ export function ProjectCard({
   showLikes = false,
   showStatus = true,
   showShareState = false,
+  ownerProfileHref,
 }: ProjectCardProps) {
   const previewImage = project.imageUrls?.[0] ?? project.imageUrl;
+  const isInteractive = typeof onSelect === "function";
+  const handleSelect = () => {
+    if (!onSelect) {
+      return;
+    }
+
+    onSelect(project);
+  };
 
   return (
     <article className="project-card">
-      <button
-        type="button"
-        className="project-card__button"
-        onClick={() => onSelect(project)}
-        aria-label={`Se detaljer for ${project.title}`}
+      <div
+        className={isInteractive ? "project-card__button is-clickable" : "project-card__button"}
+        {...(isInteractive
+          ? {
+              role: "button",
+              tabIndex: 0,
+              onClick: handleSelect,
+              onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleSelect();
+                }
+              },
+              "aria-label": `Se detaljer for ${project.title}`,
+            }
+          : {})}
       >
         <div className="project-image-wrapper">
           {previewImage ? (
@@ -61,9 +84,6 @@ export function ProjectCard({
             ) : null}
           </div>
 
-          {showOwner && project.ownerUsername ? (
-            <p className="project-meta">Av {project.ownerUsername}</p>
-          ) : null}
           {showShareState ? (
             <p className="project-meta">
               {project.isShared ? "Publisert" : "Ikke publisert"}
@@ -92,7 +112,19 @@ export function ProjectCard({
             </p>
           ) : null}
         </div>
-      </button>
+      </div>
+      {showOwner && project.ownerUsername ? (
+        <div className="project-card__owner-row">
+          <span className="project-meta">Av </span>
+          {ownerProfileHref ? (
+            <Link className="project-card__owner-link" to={ownerProfileHref}>
+              {project.ownerUsername}
+            </Link>
+          ) : (
+            <span className="project-meta">{project.ownerUsername}</span>
+          )}
+        </div>
+      ) : null}
     </article>
   );
 }

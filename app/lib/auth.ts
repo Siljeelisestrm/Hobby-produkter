@@ -10,6 +10,14 @@ export type UserProfile = {
   avatarUrl?: string;
 };
 
+export type PublicProfileSummary = {
+  id: string;
+  username: string;
+  bio?: string;
+  avatarUrl?: string;
+  sharedCount: number;
+};
+
 type ProfileRow = {
   id: string;
   username: string;
@@ -118,6 +126,32 @@ export async function fetchProfile(userId: string): Promise<UserProfile | null> 
   return mapProfile(data as ProfileRow);
 }
 
+export async function fetchProfileByUsername(
+  username: string,
+): Promise<UserProfile | null> {
+  const normalizedUsername = username.trim();
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, bio, avatar_url")
+    .eq("username", normalizedUsername)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Klarte ikke hente profil: ${error.message}`);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapProfile(data as ProfileRow);
+}
+
 export async function upsertProfile(
   user: User,
   username?: string,
@@ -148,4 +182,38 @@ export async function upsertProfile(
   }
 
   return mapProfile(data as ProfileRow);
+}
+
+export async function fetchPublicProfiles(): Promise<PublicProfileSummary[]> {
+  const supabase = getSupabaseClient();
+  const [{ data: profileRows, error: profileError }, { data: sharedRows, error: sharedError }] =
+    await Promise.all([
+      supabase.from("profiles").select("id, username, bio, avatar_url").order("username"),
+      supabase.from("products").select("owner_id").eq("is_shared", true),
+    ]);
+
+  if (profileError) {
+    throw new Error(`Klarte ikke hente profiler: ${profileError.message}`);
+  }
+
+  if (sharedError) {
+    throw new Error(`Klarte ikke hente delte produkter: ${sharedError.message}`);
+  }
+
+  const sharedCountByOwnerId = new Map<string, number>();
+  for (const row of (sharedRows as Array<{ owner_id: string | null }>) ?? []) {
+    if (!row.owner_id) {
+      continue;
+    }
+
+    sharedCountByOwnerId.set(
+      row.owner_id,
+      (sharedCountByOwnerId.get(row.owner_id) ?? 0) + 1,
+    );
+  }
+
+  return ((profileRows as ProfileRow[]) ?? []).map((row) => ({
+    ...mapProfile(row),
+    sharedCount: sharedCountByOwnerId.get(row.id) ?? 0,
+  }));
 }
