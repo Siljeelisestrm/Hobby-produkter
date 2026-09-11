@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { ProjectItem } from "~/types/project";
@@ -33,6 +33,9 @@ export function ProductDetailsModal({
   onDelete,
   onClose,
 }: ProductDetailsModalProps) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   const imageUrls = useMemo(() => {
     if (project.imageUrls && project.imageUrls.length > 0) {
       return project.imageUrls;
@@ -49,7 +52,13 @@ export function ProductDetailsModal({
   const [soldPriceInput, setSoldPriceInput] = useState(
     project.soldPriceNok?.toString() ?? "",
   );
+  const [previewFocusX, setPreviewFocusX] = useState(project.previewFocusX ?? 50);
+  const [previewFocusY, setPreviewFocusY] = useState(project.previewFocusY ?? 50);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(imageUrls[0] ?? null);
   const [editFormError, setEditFormError] = useState<string | null>(null);
+  const [isDraggingPreview, setIsDraggingPreview] = useState(false);
+  const [dragPointerId, setDragPointerId] = useState<number | null>(null);
+  const previewEditorRef = useRef<HTMLDivElement | null>(null);
 
   const hasMultipleImages = imageUrls.length > 1;
   const currentImage = imageUrls[currentImageIndex];
@@ -69,19 +78,57 @@ export function ProductDetailsModal({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingPreview) {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (dragPointerId !== null && event.pointerId !== dragPointerId) {
+        return;
+      }
+
+      updatePreviewFocusFromPointer(event.clientX, event.clientY);
+    };
+
+    const stopDragging = (event: PointerEvent) => {
+      if (dragPointerId !== null && event.pointerId !== dragPointerId) {
+        return;
+      }
+
+      setIsDraggingPreview(false);
+      setDragPointerId(null);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopDragging);
+      window.removeEventListener("pointercancel", stopDragging);
+    };
+  }, [dragPointerId, isDraggingPreview]);
 
   useEffect(() => {
     setCurrentImageIndex(0);
@@ -92,7 +139,27 @@ export function ProductDetailsModal({
     setDetails(project.details ?? "");
     setStatus(project.status);
     setSoldPriceInput(project.soldPriceNok?.toString() ?? "");
-  }, [project.id]);
+    setPreviewFocusX(project.previewFocusX ?? 50);
+    setPreviewFocusY(project.previewFocusY ?? 50);
+    setCoverImageUrl(imageUrls[0] ?? null);
+  }, [imageUrls, project]);
+
+  const updatePreviewFocusFromPointer = (clientX: number, clientY: number) => {
+    const previewElement = previewEditorRef.current;
+    if (!previewElement) {
+      return;
+    }
+
+    const rect = previewElement.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    setPreviewFocusX(Math.min(100, Math.max(0, x)));
+    setPreviewFocusY(Math.min(100, Math.max(0, y)));
+  };
 
   const handleUpdateSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -142,6 +209,9 @@ export function ProductDetailsModal({
       status,
       soldPriceNok,
       newImageFiles,
+      coverImageUrl: coverImageUrl ?? undefined,
+      previewFocusX,
+      previewFocusY,
     });
 
     if (wasUpdated) {
@@ -211,8 +281,8 @@ export function ProductDetailsModal({
           <div className="modal-details">
             <div>
               <h2>{isEditing ? "Rediger produkt" : project.title}</h2>
-              <span className={statusClassName[project.status]}>
-                {statusLabel[project.status]}
+              <span className={statusClassName[isEditing ? status : project.status]}>
+                {statusLabel[isEditing ? status : project.status]}
               </span>
             </div>
 
@@ -293,6 +363,72 @@ export function ProductDetailsModal({
                   />
                 </label>
 
+                {coverImageUrl ? (
+                  <div className="preview-adjustment">
+                    <p className="preview-adjustment__title">
+                      Dra bildet for å velge utsnitt på forsiden
+                    </p>
+                    <div
+                      ref={previewEditorRef}
+                      className={
+                        isDraggingPreview
+                          ? "preview-adjustment__canvas is-dragging"
+                          : "preview-adjustment__canvas"
+                      }
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                        setIsDraggingPreview(true);
+                        setDragPointerId(event.pointerId);
+                        updatePreviewFocusFromPointer(event.clientX, event.clientY);
+                      }}
+                    >
+                      <img
+                        src={coverImageUrl}
+                        alt=""
+                        className="preview-adjustment__image"
+                        style={{
+                          objectPosition: `${previewFocusX}% ${previewFocusY}%`,
+                        }}
+                      />
+                      <span
+                        className="preview-adjustment__handle"
+                        style={{
+                          left: `${previewFocusX}%`,
+                          top: `${previewFocusY}%`,
+                        }}
+                        aria-hidden="true"
+                      />
+                    </div>
+
+                    <div className="preview-adjustment__sliders">
+                      <label>
+                        Horisontal
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={previewFocusX}
+                          onChange={(event) =>
+                            setPreviewFocusX(Number(event.target.value))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Vertikal
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={previewFocusY}
+                          onChange={(event) =>
+                            setPreviewFocusY(Number(event.target.value))
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
+
                 {editFormError ? (
                   <p className="state-message error modal-error-message">
                     {editFormError}
@@ -364,8 +500,27 @@ export function ProductDetailsModal({
                     aria-label={`Vis bilde ${index + 1}`}
                   >
                     <img src={url} alt="" />
+                    {isEditing && coverImageUrl === url ? (
+                      <span className="modal-thumbnail__cover-label">Forside</span>
+                    ) : null}
                   </button>
                 ))}
+              </div>
+            ) : null}
+
+            {isEditing && currentImage ? (
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setCoverImageUrl(currentImage);
+                    setPreviewFocusX(50);
+                    setPreviewFocusY(50);
+                  }}
+                >
+                  Bruk valgt bilde som forside
+                </button>
               </div>
             ) : null}
 

@@ -8,5 +8,7 @@ export type ProjectItem = {
   status: ProjectStatus;
   imageUrl?: string;
   imageUrls?: string[];
+  previewFocusX?: number;
+  previewFocusY?: number;
   soldPriceNok?: number;
 };

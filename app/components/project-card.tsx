@@ -23,7 +23,16 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
       >
         <div className="project-image-wrapper">
           {previewImage ? (
-            <img src={previewImage} alt={project.title} className="project-image" />
+            <img
+              src={previewImage}
+              alt={project.title}
+              className="project-image"
+              style={{
+                objectPosition: `${project.previewFocusX ?? 50}% ${
+                  project.previewFocusY ?? 50
+                }%`,
+              }}
+            />
           ) : (
             <div className="project-image-placeholder" aria-hidden="true">
               Legg til bilde
