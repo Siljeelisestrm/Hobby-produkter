@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { SiteHeader } from "~/components/site-header";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
 import {
@@ -109,9 +108,7 @@ export default function Home() {
   };
 
   return (
-    <div className="page">
-      <SiteHeader />
-
+    <>
       <main className="content" aria-label="Prosjektoversikt">
         <section className="intro">
           <h1>Mine hjemmelagde ting</h1>
@@ -160,6 +157,6 @@ export default function Home() {
           }}
         />
       ) : null}
-    </div>
+    </>
   );
 }

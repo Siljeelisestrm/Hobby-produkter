@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { AddProductForm } from "~/components/add-product-form";
-import { SiteHeader } from "~/components/site-header";
 import { createProduct, type CreateProductInput } from "~/lib/products";
 
 export default function AddProduct() {
@@ -27,9 +26,7 @@ export default function AddProduct() {
   };
 
   return (
-    <div className="page">
-      <SiteHeader />
-
+    <>
       <main className="content">
         <section className="intro">
           <h1>Legg til nytt produkt</h1>
@@ -43,6 +40,6 @@ export default function AddProduct() {
           onSubmit={handleCreateProduct}
         />
       </main>
-    </div>
+    </>
   );
 }

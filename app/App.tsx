@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import AddProductPage from "~/routes/add-product";
 import HomePage from "~/routes/home";
+import { SiteHeader } from "~/components/site-header";
 import "./app.css";
 
 const routeMeta: Record<string, { title: string; description: string }> = {
@@ -39,13 +40,14 @@ function DocumentMeta() {
 
 export default function App() {
   return (
-    <>
+    <div className="page">
       <DocumentMeta />
+      <SiteHeader />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/legg-til-produkt" element={<AddProductPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </div>
   );
 }
