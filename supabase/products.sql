@@ -8,13 +8,17 @@ create table if not exists public.products (
   status text not null check (status in ('beholdt', 'vurderes-solgt', 'solgt')),
   sold_price_nok integer check (sold_price_nok is null or sold_price_nok >= 0),
   image_url text,
+  extra_image_urls text[] not null default '{}',
   created_at timestamptz not null default now()
 );
+
+alter table public.products
+  add column if not exists extra_image_urls text[] not null default '{}';
 
 alter table public.products enable row level security;
 
 grant usage on schema public to anon, authenticated;
-grant select, insert, delete on table public.products to anon, authenticated;
+grant select, insert, update, delete on table public.products to anon, authenticated;
 
 drop policy if exists "Public can read products" on public.products;
 create policy "Public can read products"
@@ -36,6 +40,14 @@ create policy "Public can delete products"
   for delete
   to anon, authenticated
   using (true);
+
+drop policy if exists "Public can update products" on public.products;
+create policy "Public can update products"
+  on public.products
+  for update
+  to anon, authenticated
+  using (true)
+  with check (true);
 
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)

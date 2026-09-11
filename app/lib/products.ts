@@ -11,6 +11,7 @@ type ProductRow = {
   status: string;
   sold_price_nok: number | null;
   image_url: string | null;
+  extra_image_urls: string[] | null;
   created_at: string;
 };
 
@@ -20,7 +21,16 @@ export type CreateProductInput = {
   details?: string;
   status: ProjectStatus;
   soldPriceNok?: number;
-  imageFile?: File;
+  imageFiles?: File[];
+};
+
+export type UpdateProductInput = {
+  title: string;
+  description: string;
+  details?: string;
+  status: ProjectStatus;
+  soldPriceNok?: number;
+  newImageFiles?: File[];
 };
 
 function getStoragePathFromPublicUrl(publicUrl: string): string | null {
@@ -49,6 +59,10 @@ function mapProductRow(row: ProductRow): ProjectItem {
     throw new Error(`Ugyldig status i databasen: ${row.status}`);
   }
 
+  const primaryImage = row.image_url ?? undefined;
+  const extraImages = row.extra_image_urls ?? [];
+  const imageUrls = primaryImage ? [primaryImage, ...extraImages] : extraImages;
+
   return {
     id: row.id,
     title: row.title,
@@ -56,7 +70,8 @@ function mapProductRow(row: ProductRow): ProjectItem {
     details: row.details ?? undefined,
     status: row.status,
     soldPriceNok: row.sold_price_nok ?? undefined,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: primaryImage,
+    imageUrls,
   };
 }
 
@@ -84,12 +99,22 @@ async function uploadProductImage(file: File): Promise<string> {
   return data.publicUrl;
 }
 
+async function uploadProductImages(files: File[]): Promise<string[]> {
+  const uploadedUrls: string[] = [];
+
+  for (const file of files) {
+    uploadedUrls.push(await uploadProductImage(file));
+  }
+
+  return uploadedUrls;
+}
+
 export async function fetchProducts(): Promise<ProjectItem[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, description, details, status, sold_price_nok, image_url, created_at",
+      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, created_at",
     )
     .order("created_at", { ascending: false });
 
@@ -102,7 +127,12 @@ export async function fetchProducts(): Promise<ProjectItem[]> {
 
 export async function createProduct(input: CreateProductInput): Promise<ProjectItem> {
   const supabase = getSupabaseClient();
-  const imageUrl = input.imageFile ? await uploadProductImage(input.imageFile) : null;
+  const imageUrls =
+    input.imageFiles && input.imageFiles.length > 0
+      ? await uploadProductImages(input.imageFiles)
+      : [];
+  const imageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
+  const extraImageUrls = imageUrls.length > 1 ? imageUrls.slice(1) : [];
   const soldPriceNok =
     input.status === "solgt" && typeof input.soldPriceNok === "number"
       ? input.soldPriceNok
@@ -117,14 +147,62 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       status: input.status,
       sold_price_nok: soldPriceNok,
       image_url: imageUrl,
+      extra_image_urls: extraImageUrls,
     })
     .select(
-      "id, title, description, details, status, sold_price_nok, image_url, created_at",
+      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, created_at",
     )
     .single();
 
   if (error) {
     throw new Error(`Klarte ikke lagre produkt: ${error.message}`);
+  }
+
+  return mapProductRow(data as ProductRow);
+}
+
+export async function updateProduct(
+  currentProduct: ProjectItem,
+  input: UpdateProductInput,
+): Promise<ProjectItem> {
+  const supabase = getSupabaseClient();
+  const uploadedImageUrls =
+    input.newImageFiles && input.newImageFiles.length > 0
+      ? await uploadProductImages(input.newImageFiles)
+      : [];
+
+  const existingImageUrls = currentProduct.imageUrls?.length
+    ? currentProduct.imageUrls
+    : currentProduct.imageUrl
+      ? [currentProduct.imageUrl]
+      : [];
+  const mergedImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+  const imageUrl = mergedImageUrls.length > 0 ? mergedImageUrls[0] : null;
+  const extraImageUrls = mergedImageUrls.length > 1 ? mergedImageUrls.slice(1) : [];
+  const soldPriceNok =
+    input.status === "solgt" && typeof input.soldPriceNok === "number"
+      ? input.soldPriceNok
+      : null;
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({
+      title: input.title,
+      description: input.description,
+      details: input.details ?? null,
+      status: input.status,
+      sold_price_nok: soldPriceNok,
+      image_url: imageUrl,
+      extra_image_urls: extraImageUrls,
+    })
+    .eq("id", currentProduct.id)
+    .select(
+      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, created_at",
+    )
+    .single();
+
+  if (error) {
+    throw new Error(`Klarte ikke oppdatere produkt: ${error.message}`);
   }
 
   return mapProductRow(data as ProductRow);
@@ -142,18 +220,23 @@ export async function deleteProduct(product: ProjectItem): Promise<void> {
     throw new Error(`Klarte ikke slette produkt: ${deleteProductError.message}`);
   }
 
-  if (!product.imageUrl) {
+  const allUrls = product.imageUrls?.length
+    ? product.imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+  const imagePaths = allUrls
+    .map((url) => getStoragePathFromPublicUrl(url))
+    .filter((path): path is string => Boolean(path));
+
+  if (imagePaths.length === 0) {
     return;
   }
 
-  const imagePath = getStoragePathFromPublicUrl(product.imageUrl);
-  if (!imagePath) {
-    return;
-  }
-
+  const uniqueImagePaths = Array.from(new Set(imagePaths));
   const { error: deleteImageError } = await supabase.storage
     .from(PRODUCT_IMAGE_BUCKET)
-    .remove([imagePath]);
+    .remove(uniqueImagePaths);
 
   if (deleteImageError) {
     throw new Error(`Produktet ble slettet, men ikke bildet: ${deleteImageError.message}`);

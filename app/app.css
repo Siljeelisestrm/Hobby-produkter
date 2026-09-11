@@ -206,6 +206,23 @@ body {
   cursor: not-allowed;
 }
 
+.secondary-button {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-text);
+  padding: 0.58rem 0.88rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.secondary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .danger-button {
   border: 1px solid #fecaca;
   border-radius: 10px;
@@ -389,6 +406,7 @@ body {
 .modal-image-wrapper {
   min-height: 320px;
   background: #f3f4f6;
+  position: relative;
 }
 
 .modal-image {
@@ -398,15 +416,43 @@ body {
   object-fit: cover;
 }
 
-.modal-details {
-  padding: 1.5rem;
+.modal-image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-text);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.modal-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.modal-image-nav--prev {
+  left: 0.75rem;
+}
+
+.modal-image-nav--next {
+  right: 0.75rem;
+}
+
+.modal-image-counter {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.modal-details {
+  padding: 1.5rem;
 }
 
 .modal-heading h2 {
@@ -421,10 +467,47 @@ body {
 
 .modal-actions {
   margin-top: 1.25rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .modal-error-message {
   margin-bottom: 0;
+}
+
+.modal-edit-form {
+  margin-top: 1rem;
+}
+
+.modal-thumbnails {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.modal-thumbnail {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.modal-thumbnail.is-active {
+  border-color: #94a3b8;
+}
+
+.modal-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @media (max-width: 800px) {
@@ -435,5 +518,11 @@ body {
   .modal-image-wrapper {
     height: 280px;
     min-height: 0;
+  }
+
+  .modal-image-nav {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
   }
 }

@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "~/components/site-header";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
-import { deleteProduct, fetchProducts } from "~/lib/products";
+import {
+  deleteProduct,
+  fetchProducts,
+  type UpdateProductInput,
+  updateProduct,
+} from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
 
 export default function Home() {
@@ -12,6 +17,8 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -46,7 +53,33 @@ export default function Home() {
   const hasProjects = projects.length > 0;
   const handleSelectProject = (project: ProjectItem) => {
     setDeleteErrorMessage(null);
+    setUpdateErrorMessage(null);
     setSelectedProject(project);
+  };
+
+  const handleUpdateProduct = async (
+    project: ProjectItem,
+    input: UpdateProductInput,
+  ): Promise<boolean> => {
+    setIsUpdating(true);
+    setUpdateErrorMessage(null);
+
+    try {
+      const updatedProduct = await updateProduct(project, input);
+      setProjects((currentProjects) =>
+        currentProjects.map((currentProject) =>
+          currentProject.id === updatedProduct.id ? updatedProduct : currentProject
+        )
+      );
+      setSelectedProject(updatedProduct);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Ukjent feil.";
+      setUpdateErrorMessage(message);
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteProduct = async (project: ProjectItem): Promise<void> => {
@@ -116,9 +149,13 @@ export default function Home() {
           project={selectedProject}
           isDeleting={isDeleting}
           deleteErrorMessage={deleteErrorMessage}
+          isUpdating={isUpdating}
+          updateErrorMessage={updateErrorMessage}
+          onUpdate={handleUpdateProduct}
           onDelete={handleDeleteProduct}
           onClose={() => {
             setDeleteErrorMessage(null);
+            setUpdateErrorMessage(null);
             setSelectedProject(null);
           }}
         />

@@ -11,6 +11,8 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({ project, onSelect }: ProjectCardProps) {
+  const previewImage = project.imageUrls?.[0] ?? project.imageUrl;
+
   return (
     <article className="project-card">
       <button
@@ -20,8 +22,8 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
         aria-label={`Se detaljer for ${project.title}`}
       >
         <div className="project-image-wrapper">
-          {project.imageUrl ? (
-            <img src={project.imageUrl} alt={project.title} className="project-image" />
+          {previewImage ? (
+            <img src={previewImage} alt={project.title} className="project-image" />
           ) : (
             <div className="project-image-placeholder" aria-hidden="true">
               Legg til bilde

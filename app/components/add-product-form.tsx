@@ -33,7 +33,7 @@ export function AddProductForm({
     const details = String(formData.get("details") ?? "").trim();
     const selectedStatus = String(formData.get("status") ?? defaultStatus);
     const soldPriceRaw = String(formData.get("soldPriceNok") ?? "").trim();
-    const imageFileValue = formData.get("imageFile");
+    const imageFileValues = formData.getAll("imageFiles");
 
     if (
       selectedStatus !== "beholdt" &&
@@ -60,9 +60,9 @@ export function AddProductForm({
       soldPriceNok = parsedPrice;
     }
 
-    const imageFile = imageFileValue instanceof File && imageFileValue.size > 0
-      ? imageFileValue
-      : undefined;
+    const imageFiles = imageFileValues.filter(
+      (value): value is File => value instanceof File && value.size > 0,
+    );
 
     const wasSaved = await onSubmit({
       title,
@@ -70,7 +70,7 @@ export function AddProductForm({
       details: details || undefined,
       status: selectedStatus,
       soldPriceNok,
-      imageFile,
+      imageFiles,
     });
 
     if (wasSaved) {
@@ -133,11 +133,12 @@ export function AddProductForm({
         ) : null}
 
         <label className="form-field">
-          Bilde
+          Bilder
           <input
-            name="imageFile"
+            name="imageFiles"
             type="file"
             accept="image/*"
+            multiple
             disabled={isSubmitting}
           />
         </label>

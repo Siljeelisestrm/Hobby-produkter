@@ -39,6 +39,8 @@ SQL-filen inkluderer nå også rettigheter/policies for å **slette produkter** 
 3. Toppfelt/logo ligger i `app/components/site-header.tsx`.
 4. Skjema for å legge inn nye produkter ligger i `app/components/add-product-form.tsx`.
 5. Egen side for nytt produkt ligger i `app/routes/add-product.tsx` (`/legg-til-produkt`).
+6. Du kan laste opp flere bilder per produkt. Første bilde vises på forsiden, alle vises i detaljvisning.
+7. I detaljvisning kan du redigere produkt (tekst/status/pris) og legge til flere bilder.
 
 ## Endre farger
 
