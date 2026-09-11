@@ -15,11 +15,15 @@ export default function Explore() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("all");
-  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(
+    null,
+  );
 
   const loadSharedProducts = async (): Promise<ProjectItem[]> => {
     setIsLoading(true);
@@ -62,7 +66,9 @@ export default function Explore() {
   const filteredProjects =
     selectedYear === "all"
       ? sortedProjects
-      : sortedProjects.filter((project) => project.madeYear === Number(selectedYear));
+      : sortedProjects.filter(
+          (project) => project.madeYear === Number(selectedYear),
+        );
 
   const handleToggleLike = async (
     project: ProjectItem,
@@ -100,19 +106,18 @@ export default function Explore() {
         <section className="intro">
           <h1>Utforsk</h1>
           <p>Produkter som brukere har delt med venner.</p>
-          <div className="intro-actions">
-            <Link className="secondary-button" to="/brukere">
-              Se alle brukere
-            </Link>
-          </div>
         </section>
 
         {!isAuthLoading && !user ? (
           <p className="state-message">Logg inn for å kunne like produkter.</p>
         ) : null}
 
-        {isLoading ? <p className="state-message">Laster delte produkter...</p> : null}
-        {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
+        {isLoading ? (
+          <p className="state-message">Laster delte produkter...</p>
+        ) : null}
+        {errorMessage ? (
+          <p className="state-message error">{errorMessage}</p>
+        ) : null}
 
         {!isLoading && !errorMessage && projects.length > 0 ? (
           <section className="filter-row" aria-label="Filtrering">
@@ -172,7 +177,9 @@ export default function Explore() {
           showFavoriteToggle={false}
           showLikeToggle
           onToggleLike={handleToggleLike}
-          onUpdate={async (_project: ProjectItem, _input: UpdateProductInput) => false}
+          onUpdate={async (_project: ProjectItem, _input: UpdateProductInput) =>
+            false
+          }
           onDelete={async () => {}}
           onClose={() => {
             setUpdateErrorMessage(null);
