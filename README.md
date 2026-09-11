@@ -1,87 +1,40 @@
-# Welcome to React Router!
+# Hjemmelagde ting
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Personlig nettside for å vise fram ting jeg har laget, med status:
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+- **Beholdt**
+- **Vurderes solgt**
+- **Solgt** (med pris)
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+## Kom i gang
 
 ```bash
-npm install
+pnpm i
+pnpm dev
 ```
 
-### Development
+Kjører lokalt på `http://localhost:5173`.
 
-Start the development server with HMR:
+## Supabase-oppsett
 
-```bash
-npm run dev
-```
+1. Kjør SQL fra `supabase/products.sql` i **Supabase SQL Editor**.
+2. Legg inn `.env.local` i prosjektroten:
+   ```env
+   VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+   VITE_SUPABASE_ANON_KEY=<publishable-key>
+   ```
+3. Restart `pnpm dev`.
 
-Your application will be available at `http://localhost:5173`.
+SQL-filen inkluderer nå også rettigheter/policies for å **slette produkter** og tilhørende bilder.
 
-## Building for Production
+## Endre innhold
 
-Create a production build:
+1. Produkter hentes/lages via `app/lib/products.ts`.
+2. Status-visning ligger i `app/components/project-card.tsx`.
+3. Toppfelt/logo ligger i `app/components/site-header.tsx`.
+4. Skjema for å legge inn nye produkter ligger i `app/components/add-product-form.tsx`.
+5. Egen side for nytt produkt ligger i `app/routes/add-product.tsx` (`/legg-til-produkt`).
 
-```bash
-npm run build
-```
+## Endre farger
 
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+Alle hovedfarger ligger samlet i `app/app.css` under `:root` som CSS-variabler.
