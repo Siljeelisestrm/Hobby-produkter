@@ -7,8 +7,14 @@ export type ProjectItem = {
   details?: string;
   madeYear?: number;
   createdAt: string;
+  ownerId: string;
+  ownerUsername?: string;
+  ownerAvatarUrl?: string;
   status: ProjectStatus;
   isFavorite: boolean;
+  isShared: boolean;
+  likeCount: number;
+  likedByMe: boolean;
   imageUrl?: string;
   imageUrls?: string[];
   previewFocusX?: number;

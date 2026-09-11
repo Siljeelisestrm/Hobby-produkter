@@ -8,9 +8,16 @@ import {
 type ProjectCardProps = {
   project: ProjectItem;
   onSelect: (project: ProjectItem) => void;
+  showOwner?: boolean;
+  showLikes?: boolean;
 };
 
-export function ProjectCard({ project, onSelect }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  onSelect,
+  showOwner = false,
+  showLikes = false,
+}: ProjectCardProps) {
   const previewImage = project.imageUrls?.[0] ?? project.imageUrl;
 
   return (
@@ -48,6 +55,10 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
             </span>
           </div>
 
+          {showOwner && project.ownerUsername ? (
+            <p className="project-meta">Av {project.ownerUsername}</p>
+          ) : null}
+
           {project.description ? <p>{project.description}</p> : null}
 
           {project.status === "solgt" ? (
@@ -62,6 +73,12 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
 
           {typeof project.madeYear === "number" ? (
             <p className="project-meta">Laget i {project.madeYear}</p>
+          ) : null}
+
+          {showLikes ? (
+            <p className="project-meta">
+              {project.likeCount} {project.likeCount === 1 ? "like" : "likes"}
+            </p>
           ) : null}
         </div>
       </button>

@@ -9,14 +9,27 @@ type ProductRow = {
   description: string;
   details: string | null;
   created_year: number | null;
+  owner_id: string | null;
   status: string;
   is_favorite: boolean | null;
+  is_shared: boolean | null;
   sold_price_nok: number | null;
   image_url: string | null;
   extra_image_urls: string[] | null;
   preview_focus_x: number | null;
   preview_focus_y: number | null;
   created_at: string;
+};
+
+type ProfileRow = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+};
+
+type ProductLikeRow = {
+  product_id: string;
+  user_id: string;
 };
 
 export type CreateProductInput = {
@@ -102,12 +115,16 @@ function mapProductRow(row: ProductRow): ProjectItem {
   return {
     id: row.id,
     title: row.title,
-    description: row.description,
+    description: row.description ?? "",
     details: row.details ?? undefined,
     madeYear: row.created_year ?? undefined,
     createdAt: row.created_at,
+    ownerId: row.owner_id ?? "",
     status: row.status,
     isFavorite: row.is_favorite ?? false,
+    isShared: row.is_shared ?? false,
+    likeCount: 0,
+    likedByMe: false,
     soldPriceNok: row.sold_price_nok ?? undefined,
     imageUrl: primaryImage,
     imageUrls,
@@ -150,12 +167,54 @@ async function uploadProductImages(files: File[]): Promise<string[]> {
   return uploadedUrls;
 }
 
+async function attachLikeMetadata(
+  projects: ProjectItem[],
+  currentUserId?: string,
+): Promise<ProjectItem[]> {
+  if (projects.length === 0) {
+    return projects;
+  }
+
+  const supabase = getSupabaseClient();
+  const { data: likeRows, error: likesError } = await supabase
+    .from("product_likes")
+    .select("product_id, user_id")
+    .in(
+      "product_id",
+      projects.map((project) => project.id),
+    );
+
+  if (likesError) {
+    throw new Error(`Klarte ikke hente likes: ${likesError.message}`);
+  }
+
+  const likeCountByProductId = new Map<string, number>();
+  const likedProductIds = new Set<string>();
+
+  for (const likeRow of likeRows as ProductLikeRow[]) {
+    likeCountByProductId.set(
+      likeRow.product_id,
+      (likeCountByProductId.get(likeRow.product_id) ?? 0) + 1,
+    );
+
+    if (currentUserId && likeRow.user_id === currentUserId) {
+      likedProductIds.add(likeRow.product_id);
+    }
+  }
+
+  return projects.map((project) => ({
+    ...project,
+    likeCount: likeCountByProductId.get(project.id) ?? 0,
+    likedByMe: likedProductIds.has(project.id),
+  }));
+}
+
 export async function fetchProducts(): Promise<ProjectItem[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .order("created_at", { ascending: false });
 
@@ -164,6 +223,72 @@ export async function fetchProducts(): Promise<ProjectItem[]> {
   }
 
   return (data as ProductRow[]).map(mapProductRow);
+}
+
+export async function fetchUserProducts(userId: string): Promise<ProjectItem[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+    )
+    .eq("owner_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Klarte ikke hente produkter: ${error.message}`);
+  }
+
+  const projects = (data as ProductRow[]).map(mapProductRow);
+  return attachLikeMetadata(projects, userId);
+}
+
+export async function fetchSharedProducts(
+  currentUserId?: string,
+): Promise<ProjectItem[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+    )
+    .eq("is_shared", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Klarte ikke hente delte produkter: ${error.message}`);
+  }
+
+  const projects = (data as ProductRow[]).map(mapProductRow);
+  if (projects.length === 0) {
+    return projects;
+  }
+
+  const ownerIds = Array.from(
+    new Set(projects.map((project) => project.ownerId).filter(Boolean)),
+  );
+  const [{ data: profileRows, error: profilesError }, projectsWithLikes] = await Promise.all([
+      supabase.from("profiles").select("id, username, avatar_url").in("id", ownerIds),
+      attachLikeMetadata(projects, currentUserId),
+    ]);
+
+  if (profilesError) {
+    throw new Error(`Klarte ikke hente profiler: ${profilesError.message}`);
+  }
+
+  const profileById = new Map<string, ProfileRow>(
+    (profileRows as ProfileRow[]).map((profile) => [profile.id, profile]),
+  );
+
+  return projectsWithLikes.map((project) => {
+    const profile = profileById.get(project.ownerId);
+
+    return {
+      ...project,
+      ownerUsername: profile?.username ?? "Ukjent bruker",
+      ownerAvatarUrl: profile?.avatar_url ?? undefined,
+    };
+  });
 }
 
 export async function createProduct(input: CreateProductInput): Promise<ProjectItem> {
@@ -192,6 +317,7 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       created_year: createdYear,
       status: input.status,
       is_favorite: false,
+      is_shared: false,
       sold_price_nok: soldPriceNok,
       image_url: imageUrl,
       extra_image_urls: extraImageUrls,
@@ -199,7 +325,7 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       preview_focus_y: 50,
     })
     .select(
-      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -266,7 +392,7 @@ export async function updateProduct(
     })
     .eq("id", currentProduct.id)
     .select(
-      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -288,7 +414,7 @@ export async function setProductFavorite(
     .update({ is_favorite: isFavorite })
     .eq("id", productId)
     .select(
-      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -297,6 +423,64 @@ export async function setProductFavorite(
   }
 
   return mapProductRow(data as ProductRow);
+}
+
+export async function setProductShared(
+  productId: string,
+  isShared: boolean,
+): Promise<ProjectItem> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({ is_shared: isShared })
+    .eq("id", productId)
+    .select(
+      "id, title, description, details, created_year, owner_id, status, is_favorite, is_shared, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+    )
+    .single();
+
+  if (error) {
+    throw new Error(`Klarte ikke dele produkt: ${error.message}`);
+  }
+
+  return mapProductRow(data as ProductRow);
+}
+
+export async function toggleProductLike(
+  productId: string,
+  userId: string,
+  shouldLike: boolean,
+): Promise<void> {
+  const supabase = getSupabaseClient();
+
+  if (shouldLike) {
+    const { error } = await supabase
+      .from("product_likes")
+      .upsert(
+        {
+          product_id: productId,
+          user_id: userId,
+        },
+        { onConflict: "product_id,user_id", ignoreDuplicates: true },
+      );
+
+    if (error) {
+      throw new Error(`Klarte ikke like produkt: ${error.message}`);
+    }
+
+    return;
+  }
+
+  const { error } = await supabase
+    .from("product_likes")
+    .delete()
+    .eq("product_id", productId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(`Klarte ikke fjerne like: ${error.message}`);
+  }
 }
 
 export async function deleteProduct(product: ProjectItem): Promise<void> {

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "~/context/auth-context";
+import { signOut } from "~/lib/auth";
 
 const LOGO_SRC = `${import.meta.env.BASE_URL}images/logo.png`;
 
@@ -12,6 +14,7 @@ type IndicatorStyle = {
 
 export function SiteHeader() {
   const location = useLocation();
+  const { user, profile } = useAuth();
   const navRef = useRef<HTMLElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle>({
     left: 0,
@@ -74,24 +77,27 @@ export function SiteHeader() {
             aria-hidden="true"
           />
           <NavLink to="/" end className={navClassName}>
-            Produkter
+            Min side
           </NavLink>
-          <NavLink to="/legg-til-produkt" className={navClassName}>
-            Legg til produkt
-          </NavLink>
-          <NavLink
-            to="/favoritter"
-            className={({ isActive }) =>
-              isActive
-                ? "site-nav__link site-nav__link--icon site-nav__link--active"
-                : "site-nav__link site-nav__link--icon"
-            }
-            aria-label="Favoritter"
-            title="Favoritter"
-          >
-            ❤
+          <NavLink to="/utforsk" className={navClassName}>
+            Utforsk
           </NavLink>
         </nav>
+
+        {user ? (
+          <div className="site-user">
+            <span className="site-user__name">{profile?.username ?? user.email}</span>
+            <button
+              type="button"
+              className="secondary-button site-user__logout"
+              onClick={() => {
+                void signOut();
+              }}
+            >
+              Logg ut
+            </button>
+          </div>
+        ) : null}
       </div>
     </header>
   );

@@ -15,10 +15,18 @@ type ProductDetailsModalProps = {
   deleteErrorMessage: string | null;
   isUpdating: boolean;
   updateErrorMessage: string | null;
-  onToggleFavorite: (
+  canEdit?: boolean;
+  canDelete?: boolean;
+  showFavoriteToggle?: boolean;
+  showShareToggle?: boolean;
+  shareLabel?: string;
+  showLikeToggle?: boolean;
+  onToggleFavorite?: (
     project: ProjectItem,
     isFavorite: boolean,
   ) => Promise<void>;
+  onToggleShare?: (project: ProjectItem, isShared: boolean) => Promise<void>;
+  onToggleLike?: (project: ProjectItem, shouldLike: boolean) => Promise<void>;
   onUpdate: (
     project: ProjectItem,
     input: UpdateProductInput,
@@ -33,7 +41,15 @@ export function ProductDetailsModal({
   deleteErrorMessage,
   isUpdating,
   updateErrorMessage,
+  canEdit = true,
+  canDelete = true,
+  showFavoriteToggle = true,
+  showShareToggle = false,
+  shareLabel = "Del med venner",
+  showLikeToggle = false,
   onToggleFavorite,
+  onToggleShare,
+  onToggleLike,
   onUpdate,
   onDelete,
   onClose,
@@ -377,9 +393,17 @@ export function ProductDetailsModal({
               <span className={statusClassName[isEditing ? status : project.status]}>
                 {statusLabel[isEditing ? status : project.status]}
               </span>
+              {!isEditing && project.ownerUsername ? (
+                <p className="project-meta">Av {project.ownerUsername}</p>
+              ) : null}
+              {!isEditing && showLikeToggle ? (
+                <p className="project-meta">
+                  {project.likeCount} {project.likeCount === 1 ? "like" : "likes"}
+                </p>
+              ) : null}
             </div>
 
-            {isEditing ? (
+            {isEditing && canEdit ? (
               <form
                 id={`edit-product-form-${project.id}`}
                 className="product-form modal-edit-form"
@@ -662,32 +686,58 @@ export function ProductDetailsModal({
 
             {!isEditing ? (
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => onToggleFavorite(project, !project.isFavorite)}
-                  disabled={isUpdating || isDeleting}
-                >
-                  {project.isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    resetEditState();
-                    setIsEditing(true);
-                  }}
-                >
-                  Rediger produkt
-                </button>
-                <button
-                  type="button"
-                  className="danger-button"
-                  disabled={isDeleting}
-                  onClick={() => onDelete(project)}
-                >
-                  {isDeleting ? "Sletter..." : "Slett produkt"}
-                </button>
+                {showFavoriteToggle ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onToggleFavorite?.(project, !project.isFavorite)}
+                    disabled={isUpdating || isDeleting}
+                  >
+                    {project.isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+                  </button>
+                ) : null}
+                {showShareToggle ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onToggleShare?.(project, !project.isShared)}
+                    disabled={isUpdating || isDeleting}
+                  >
+                    {project.isShared ? "Ikke del med venner" : shareLabel}
+                  </button>
+                ) : null}
+                {showLikeToggle ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onToggleLike?.(project, !project.likedByMe)}
+                    disabled={isUpdating}
+                  >
+                    {project.likedByMe ? "Fjern like" : "Lik produkt"}
+                  </button>
+                ) : null}
+                {canEdit ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      resetEditState();
+                      setIsEditing(true);
+                    }}
+                  >
+                    Rediger produkt
+                  </button>
+                ) : null}
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    disabled={isDeleting}
+                    onClick={() => onDelete(project)}
+                  >
+                    {isDeleting ? "Sletter..." : "Slett produkt"}
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>
