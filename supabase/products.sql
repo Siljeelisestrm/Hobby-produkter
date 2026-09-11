@@ -5,6 +5,7 @@ create table if not exists public.products (
   title text not null,
   description text not null,
   details text,
+  created_year integer check (created_year is null or (created_year >= 1900 and created_year <= 2100)),
   status text not null check (status in ('beholdt', 'vurderes-solgt', 'solgt', 'gave')),
   is_favorite boolean not null default false,
   sold_price_nok integer check (sold_price_nok is null or sold_price_nok >= 0),
@@ -28,11 +29,21 @@ alter table public.products
   add column if not exists is_favorite boolean not null default false;
 
 alter table public.products
+  add column if not exists created_year integer;
+
+alter table public.products
   drop constraint if exists products_status_check;
 
 alter table public.products
   add constraint products_status_check
   check (status in ('beholdt', 'vurderes-solgt', 'solgt', 'gave'));
+
+alter table public.products
+  drop constraint if exists products_created_year_check;
+
+alter table public.products
+  add constraint products_created_year_check
+  check (created_year is null or (created_year >= 1900 and created_year <= 2100));
 
 alter table public.products enable row level security;
 

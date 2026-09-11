@@ -52,8 +52,9 @@ export function ProductDetailsModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(project.title);
-  const [description, setDescription] = useState(project.description);
+  const [description, setDescription] = useState(project.description ?? "");
   const [details, setDetails] = useState(project.details ?? "");
+  const [madeYearInput, setMadeYearInput] = useState(project.madeYear?.toString() ?? "");
   const [status, setStatus] = useState(project.status);
   const [soldPriceInput, setSoldPriceInput] = useState(
     project.soldPriceNok?.toString() ?? "",
@@ -154,8 +155,9 @@ export function ProductDetailsModal({
     setEditFormError(null);
     setEditableImageUrls(imageUrls);
     setTitle(project.title);
-    setDescription(project.description);
+    setDescription(project.description ?? "");
     setDetails(project.details ?? "");
+    setMadeYearInput(project.madeYear?.toString() ?? "");
     setStatus(project.status);
     setSoldPriceInput(project.soldPriceNok?.toString() ?? "");
     setPreviewFocusX(project.previewFocusX ?? 50);
@@ -194,8 +196,9 @@ export function ProductDetailsModal({
   const resetEditState = () => {
     setEditFormError(null);
     setTitle(project.title);
-    setDescription(project.description);
+    setDescription(project.description ?? "");
     setDetails(project.details ?? "");
+    setMadeYearInput(project.madeYear?.toString() ?? "");
     setStatus(project.status);
     setSoldPriceInput(project.soldPriceNok?.toString() ?? "");
     setEditableImageUrls(imageUrls);
@@ -218,12 +221,24 @@ export function ProductDetailsModal({
       return;
     }
 
-    if (!trimmedDescription) {
-      setEditFormError("Beskrivelse kan ikke være tom.");
-      return;
+    let soldPriceNok: number | undefined;
+    let madeYear: number | undefined;
+    const maxAllowedYear = new Date().getFullYear() + 1;
+
+    if (madeYearInput.trim()) {
+      const parsedYear = Number(madeYearInput);
+      if (
+        !Number.isInteger(parsedYear) ||
+        parsedYear < 1900 ||
+        parsedYear > maxAllowedYear
+      ) {
+        setEditFormError(`Årstall må være et heltall mellom 1900 og ${maxAllowedYear}.`);
+        return;
+      }
+
+      madeYear = parsedYear;
     }
 
-    let soldPriceNok: number | undefined;
     if (status === "solgt") {
       if (!soldPriceInput.trim()) {
         setEditFormError("Legg inn salgspris når status er Solgt.");
@@ -245,11 +260,16 @@ export function ProductDetailsModal({
       .filter(
         (value): value is File => value instanceof File && value.size > 0,
       );
+    if (editableImageUrls.length + newImageFiles.length === 0) {
+      setEditFormError("Produkt må ha minst ett bilde.");
+      return;
+    }
 
     const wasUpdated = await onUpdate(project, {
       title: trimmedTitle,
       description: trimmedDescription,
       details: trimmedDetails || undefined,
+      madeYear,
       status,
       soldPriceNok,
       keptImageUrls: editableImageUrls,
@@ -376,7 +396,7 @@ export function ProductDetailsModal({
                 </label>
 
                 <label className="form-field">
-                  Kort beskrivelse
+                  Kort beskrivelse (valgfritt)
                   <textarea
                     rows={3}
                     value={description}
@@ -409,6 +429,19 @@ export function ProductDetailsModal({
                     <option value="solgt">Solgt</option>
                     <option value="gave">Gave</option>
                   </select>
+                </label>
+
+                <label className="form-field">
+                  År laget (valgfritt)
+                  <input
+                    type="number"
+                    min={1900}
+                    max={new Date().getFullYear() + 1}
+                    step={1}
+                    value={madeYearInput}
+                    onChange={(event) => setMadeYearInput(event.target.value)}
+                    disabled={isUpdating}
+                  />
                 </label>
 
                 {status === "solgt" ? (
@@ -519,7 +552,10 @@ export function ProductDetailsModal({
               </form>
             ) : (
               <>
-                <p>{project.description}</p>
+                {project.description ? <p>{project.description}</p> : null}
+                {typeof project.madeYear === "number" ? (
+                  <p className="project-meta">Laget i {project.madeYear}</p>
+                ) : null}
                 {project.details ? <p>{project.details}</p> : null}
                 {project.status === "solgt" ? (
                   typeof project.soldPriceNok === "number" ? (

@@ -12,6 +12,7 @@ import type { ProjectItem } from "~/types/project";
 
 export default function Favorites() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -51,7 +52,31 @@ export default function Favorites() {
   }, []);
 
   const favoriteProjects = projects.filter((project) => project.isFavorite);
-  const hasFavoriteProjects = favoriteProjects.length > 0;
+  const sortedFavoriteProjects = [...favoriteProjects].sort((a, b) => {
+    const yearA = a.madeYear ?? Number.NEGATIVE_INFINITY;
+    const yearB = b.madeYear ?? Number.NEGATIVE_INFINITY;
+
+    if (yearA !== yearB) {
+      return yearB - yearA;
+    }
+
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+  const availableYears = Array.from(
+    new Set(
+      sortedFavoriteProjects
+        .map((project) => project.madeYear)
+        .filter((year): year is number => typeof year === "number"),
+    ),
+  ).sort((a, b) => b - a);
+  const filteredFavoriteProjects =
+    selectedYear === "all"
+      ? sortedFavoriteProjects
+      : sortedFavoriteProjects.filter(
+          (project) => project.madeYear === Number(selectedYear),
+        );
+  const hasFavoriteProjects = filteredFavoriteProjects.length > 0;
+  const hasAnyFavorites = favoriteProjects.length > 0;
 
   const handleSelectProject = (project: ProjectItem) => {
     setDeleteErrorMessage(null);
@@ -145,13 +170,36 @@ export default function Favorites() {
 
         {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
 
-        {!isLoading && !errorMessage && !hasFavoriteProjects ? (
+        {!isLoading && !errorMessage && hasAnyFavorites ? (
+          <section className="filter-row" aria-label="Filtrering">
+            <label className="form-field filter-field">
+              År
+              <select
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(event.target.value)}
+              >
+                <option value="all">Alle</option>
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </section>
+        ) : null}
+
+        {!isLoading && !errorMessage && !hasAnyFavorites ? (
           <p className="state-message">Ingen favoritter enda.</p>
+        ) : null}
+
+        {!isLoading && !errorMessage && hasAnyFavorites && !hasFavoriteProjects ? (
+          <p className="state-message">Ingen favoritter for valgt år.</p>
         ) : null}
 
         {hasFavoriteProjects ? (
           <section className="project-grid" aria-label="Favorittprodukter">
-            {favoriteProjects.map((project) => (
+            {filteredFavoriteProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}

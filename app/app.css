@@ -221,6 +221,14 @@ body {
   font: inherit;
 }
 
+@media (max-width: 900px) {
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    font-size: 16px;
+  }
+}
+
 .form-field textarea {
   resize: vertical;
 }
@@ -333,22 +341,34 @@ body {
   gap: 1rem;
 }
 
+.filter-row {
+  margin: 0 0 1rem;
+}
+
+.filter-field {
+  width: min(220px, 100%);
+}
+
 .project-card {
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-surface);
   overflow: hidden;
+  height: 100%;
 }
 
 .project-card__button {
   border: 0;
   width: 100%;
+  height: 100%;
   padding: 0;
   margin: 0;
   text-align: left;
   background: transparent;
   color: inherit;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .project-card__button:focus-visible {
@@ -379,6 +399,9 @@ body {
 
 .project-card__content {
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .project-card__header {
@@ -397,6 +420,16 @@ body {
   margin: 0.8rem 0 0;
   color: var(--color-muted-text);
   line-height: 1.4;
+}
+
+.project-meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: var(--color-muted-text);
+}
+
+.project-card__content .project-meta {
+  margin-top: auto;
 }
 
 .status-badge {

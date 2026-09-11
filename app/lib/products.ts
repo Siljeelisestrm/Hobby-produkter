@@ -8,6 +8,7 @@ type ProductRow = {
   title: string;
   description: string;
   details: string | null;
+  created_year: number | null;
   status: string;
   is_favorite: boolean | null;
   sold_price_nok: number | null;
@@ -22,6 +23,7 @@ export type CreateProductInput = {
   title: string;
   description: string;
   details?: string;
+  madeYear?: number;
   status: ProjectStatus;
   soldPriceNok?: number;
   imageFiles?: File[];
@@ -31,6 +33,7 @@ export type UpdateProductInput = {
   title: string;
   description: string;
   details?: string;
+  madeYear?: number;
   status: ProjectStatus;
   soldPriceNok?: number;
   keptImageUrls?: string[];
@@ -46,6 +49,19 @@ function normalizeFocus(value: number | undefined): number {
   }
 
   return Math.min(100, Math.max(0, value));
+}
+
+function getValidatedMadeYear(value: number | undefined): number | null {
+  if (typeof value !== "number") {
+    return null;
+  }
+
+  const currentYear = new Date().getFullYear();
+  if (!Number.isInteger(value) || value < 1900 || value > currentYear + 1) {
+    throw new Error(`Årstall må være et heltall mellom 1900 og ${currentYear + 1}.`);
+  }
+
+  return value;
 }
 
 function getStoragePathFromPublicUrl(publicUrl: string): string | null {
@@ -88,6 +104,8 @@ function mapProductRow(row: ProductRow): ProjectItem {
     title: row.title,
     description: row.description,
     details: row.details ?? undefined,
+    madeYear: row.created_year ?? undefined,
+    createdAt: row.created_at,
     status: row.status,
     isFavorite: row.is_favorite ?? false,
     soldPriceNok: row.sold_price_nok ?? undefined,
@@ -137,7 +155,7 @@ export async function fetchProducts(): Promise<ProjectItem[]> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .order("created_at", { ascending: false });
 
@@ -154,19 +172,24 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
     input.imageFiles && input.imageFiles.length > 0
       ? await uploadProductImages(input.imageFiles)
       : [];
+  if (imageUrls.length === 0) {
+    throw new Error("Produkt må ha minst ett bilde.");
+  }
   const imageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
   const extraImageUrls = imageUrls.length > 1 ? imageUrls.slice(1) : [];
   const soldPriceNok =
     input.status === "solgt" && typeof input.soldPriceNok === "number"
       ? input.soldPriceNok
       : null;
+  const createdYear = getValidatedMadeYear(input.madeYear);
 
   const { data, error } = await supabase
     .from("products")
     .insert({
       title: input.title,
-      description: input.description,
+      description: input.description.trim(),
       details: input.details ?? null,
+      created_year: createdYear,
       status: input.status,
       is_favorite: false,
       sold_price_nok: soldPriceNok,
@@ -176,7 +199,7 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       preview_focus_y: 50,
     })
     .select(
-      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -218,17 +241,22 @@ export async function updateProduct(
       : mergedImageUrls;
   const imageUrl = orderedImageUrls.length > 0 ? orderedImageUrls[0] : null;
   const extraImageUrls = orderedImageUrls.length > 1 ? orderedImageUrls.slice(1) : [];
+  if (!imageUrl) {
+    throw new Error("Produkt må ha minst ett bilde.");
+  }
   const soldPriceNok =
     input.status === "solgt" && typeof input.soldPriceNok === "number"
       ? input.soldPriceNok
       : null;
+  const createdYear = getValidatedMadeYear(input.madeYear);
 
   const { data, error } = await supabase
     .from("products")
     .update({
       title: input.title,
-      description: input.description,
+      description: input.description.trim(),
       details: input.details ?? null,
+      created_year: createdYear,
       status: input.status,
       sold_price_nok: soldPriceNok,
       image_url: imageUrl,
@@ -238,7 +266,7 @@ export async function updateProduct(
     })
     .eq("id", currentProduct.id)
     .select(
-      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -260,7 +288,7 @@ export async function setProductFavorite(
     .update({ is_favorite: isFavorite })
     .eq("id", productId)
     .select(
-      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, created_year, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 

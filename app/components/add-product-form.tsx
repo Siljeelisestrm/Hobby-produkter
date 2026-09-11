@@ -21,6 +21,7 @@ export function AddProductForm({
 }: AddProductFormProps) {
   const [status, setStatus] = useState<ProjectStatus>(defaultStatus);
   const [formError, setFormError] = useState<string | null>(null);
+  const maxAllowedYear = new Date().getFullYear() + 1;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,6 +32,7 @@ export function AddProductForm({
     const title = String(formData.get("title") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
     const details = String(formData.get("details") ?? "").trim();
+    const madeYearRaw = String(formData.get("madeYear") ?? "").trim();
     const selectedStatus = String(formData.get("status") ?? defaultStatus);
     const soldPriceRaw = String(formData.get("soldPriceNok") ?? "").trim();
     const imageFileValues = formData.getAll("imageFiles");
@@ -46,6 +48,21 @@ export function AddProductForm({
     }
 
     let soldPriceNok: number | undefined;
+    let madeYear: number | undefined;
+    if (madeYearRaw) {
+      const parsedYear = Number(madeYearRaw);
+      if (
+        !Number.isInteger(parsedYear) ||
+        parsedYear < 1900 ||
+        parsedYear > maxAllowedYear
+      ) {
+        setFormError(`Årstall må være et heltall mellom 1900 og ${maxAllowedYear}.`);
+        return;
+      }
+
+      madeYear = parsedYear;
+    }
+
     if (selectedStatus === "solgt") {
       if (!soldPriceRaw) {
         setFormError("Legg inn salgspris når status er Solgt.");
@@ -64,11 +81,16 @@ export function AddProductForm({
     const imageFiles = imageFileValues.filter(
       (value): value is File => value instanceof File && value.size > 0,
     );
+    if (imageFiles.length === 0) {
+      setFormError("Du må legge til minst ett bilde.");
+      return;
+    }
 
     const wasSaved = await onSubmit({
       title,
       description,
       details: details || undefined,
+      madeYear,
       status: selectedStatus,
       soldPriceNok,
       imageFiles,
@@ -91,11 +113,10 @@ export function AddProductForm({
         </label>
 
         <label className="form-field">
-          Kort beskrivelse
+          Kort beskrivelse (valgfritt)
           <textarea
             name="description"
             rows={3}
-            required
             disabled={isSubmitting}
           />
         </label>
@@ -103,6 +124,18 @@ export function AddProductForm({
         <label className="form-field">
           Ekstra detaljer
           <textarea name="details" rows={4} disabled={isSubmitting} />
+        </label>
+
+        <label className="form-field">
+          År laget (valgfritt)
+          <input
+            name="madeYear"
+            type="number"
+            min={1900}
+            max={maxAllowedYear}
+            step={1}
+            disabled={isSubmitting}
+          />
         </label>
 
         <label className="form-field">

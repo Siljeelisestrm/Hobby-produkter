@@ -5,6 +5,8 @@ export type ProjectItem = {
   title: string;
   description: string;
   details?: string;
+  madeYear?: number;
+  createdAt: string;
   status: ProjectStatus;
   isFavorite: boolean;
   imageUrl?: string;

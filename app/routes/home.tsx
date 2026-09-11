@@ -12,6 +12,7 @@ import type { ProjectItem } from "~/types/project";
 
 export default function Home() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(
     null,
   );
@@ -57,7 +58,32 @@ export default function Home() {
     };
   }, []);
 
-  const hasProjects = projects.length > 0;
+  const sortedProjects = [...projects].sort((a, b) => {
+    const yearA = a.madeYear ?? Number.NEGATIVE_INFINITY;
+    const yearB = b.madeYear ?? Number.NEGATIVE_INFINITY;
+
+    if (yearA !== yearB) {
+      return yearB - yearA;
+    }
+
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+
+  const availableYears = Array.from(
+    new Set(
+      sortedProjects
+        .map((project) => project.madeYear)
+        .filter((year): year is number => typeof year === "number"),
+    ),
+  ).sort((a, b) => b - a);
+  const filteredProjects =
+    selectedYear === "all"
+      ? sortedProjects
+      : sortedProjects.filter(
+          (project) => project.madeYear === Number(selectedYear),
+        );
+  const hasProjects = filteredProjects.length > 0;
+  const hasAnyProjects = projects.length > 0;
   const handleSelectProject = (project: ProjectItem) => {
     setDeleteErrorMessage(null);
     setUpdateErrorMessage(null);
@@ -160,15 +186,38 @@ export default function Home() {
           <p className="state-message error">{errorMessage}</p>
         ) : null}
 
-        {!isLoading && !errorMessage && !hasProjects ? (
+        {!isLoading && !errorMessage && hasAnyProjects ? (
+          <section className="filter-row" aria-label="Filtrering">
+            <label className="form-field filter-field">
+              År
+              <select
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(event.target.value)}
+              >
+                <option value="all">Alle</option>
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </section>
+        ) : null}
+
+        {!isLoading && !errorMessage && !hasAnyProjects ? (
           <p className="state-message">
             Ingen produkter enda. Legg inn første produkt i Supabase.
           </p>
         ) : null}
 
+        {!isLoading && !errorMessage && hasAnyProjects && !hasProjects ? (
+          <p className="state-message">Ingen produkter for valgt år.</p>
+        ) : null}
+
         {hasProjects ? (
           <section className="project-grid" aria-label="Prosjekter">
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}

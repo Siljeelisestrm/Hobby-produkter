@@ -48,7 +48,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
             </span>
           </div>
 
-          <p>{project.description}</p>
+          {project.description ? <p>{project.description}</p> : null}
 
           {project.status === "solgt" ? (
             typeof project.soldPriceNok === "number" ? (
@@ -58,6 +58,10 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
             ) : (
               <p className="sold-price">Pris er ikke lagt inn enda.</p>
             )
+          ) : null}
+
+          {typeof project.madeYear === "number" ? (
+            <p className="project-meta">Laget i {project.madeYear}</p>
           ) : null}
         </div>
       </button>
