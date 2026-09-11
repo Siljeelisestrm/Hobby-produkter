@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import AddProductPage from "~/routes/add-product";
+import FavoritesPage from "~/routes/favorites";
 import HomePage from "~/routes/home";
 import { SiteHeader } from "~/components/site-header";
 import "./app.css";
@@ -14,6 +15,10 @@ const routeMeta: Record<string, { title: string; description: string }> = {
   "/legg-til-produkt": {
     title: "Legg til produkt | Hjemmelagde Ting",
     description: "Legg til nytt produkt med bilde og status.",
+  },
+  "/favoritter": {
+    title: "Favoritter | Hjemmelagde Ting",
+    description: "Produkter markert som favoritt.",
   },
 };
 
@@ -46,6 +51,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/legg-til-produkt" element={<AddProductPage />} />
+        <Route path="/favoritter" element={<FavoritesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

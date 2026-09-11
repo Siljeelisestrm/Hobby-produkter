@@ -4,12 +4,14 @@ export const statusLabel: Record<ProjectStatus, string> = {
   beholdt: "Beholdt",
   "vurderes-solgt": "Vurderes solgt",
   solgt: "Solgt",
+  gave: "Gave",
 };
 
 export const statusClassName: Record<ProjectStatus, string> = {
   beholdt: "status-badge status-badge--kept",
   "vurderes-solgt": "status-badge status-badge--considering",
   solgt: "status-badge status-badge--sold",
+  gave: "status-badge status-badge--gift",
 };
 
 const currencyFormatter = new Intl.NumberFormat("nb-NO", {

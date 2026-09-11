@@ -79,6 +79,18 @@ export function SiteHeader() {
           <NavLink to="/legg-til-produkt" className={navClassName}>
             Legg til produkt
           </NavLink>
+          <NavLink
+            to="/favoritter"
+            className={({ isActive }) =>
+              isActive
+                ? "site-nav__link site-nav__link--icon site-nav__link--active"
+                : "site-nav__link site-nav__link--icon"
+            }
+            aria-label="Favoritter"
+            title="Favoritter"
+          >
+            ❤
+          </NavLink>
         </nav>
       </div>
     </header>

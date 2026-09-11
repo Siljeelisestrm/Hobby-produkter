@@ -15,6 +15,10 @@ type ProductDetailsModalProps = {
   deleteErrorMessage: string | null;
   isUpdating: boolean;
   updateErrorMessage: string | null;
+  onToggleFavorite: (
+    project: ProjectItem,
+    isFavorite: boolean,
+  ) => Promise<void>;
   onUpdate: (
     project: ProjectItem,
     input: UpdateProductInput,
@@ -29,6 +33,7 @@ export function ProductDetailsModal({
   deleteErrorMessage,
   isUpdating,
   updateErrorMessage,
+  onToggleFavorite,
   onUpdate,
   onDelete,
   onClose,
@@ -43,6 +48,7 @@ export function ProductDetailsModal({
 
     return project.imageUrl ? [project.imageUrl] : [];
   }, [project.imageUrl, project.imageUrls]);
+  const [editableImageUrls, setEditableImageUrls] = useState<string[]>(imageUrls);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(project.title);
@@ -60,18 +66,30 @@ export function ProductDetailsModal({
   const [dragPointerId, setDragPointerId] = useState<number | null>(null);
   const previewEditorRef = useRef<HTMLDivElement | null>(null);
 
-  const hasMultipleImages = imageUrls.length > 1;
-  const currentImage = imageUrls[currentImageIndex];
+  const activeImageUrls = isEditing ? editableImageUrls : imageUrls;
+  const hasMultipleImages = activeImageUrls.length > 1;
+  const shouldShowThumbnails = isEditing
+    ? activeImageUrls.length > 0
+    : hasMultipleImages;
+  const currentImage = activeImageUrls[currentImageIndex];
 
   const goToPreviousImage = () => {
+    if (activeImageUrls.length < 2) {
+      return;
+    }
+
     setCurrentImageIndex((current) =>
-      current === 0 ? imageUrls.length - 1 : current - 1,
+      current === 0 ? activeImageUrls.length - 1 : current - 1,
     );
   };
 
   const goToNextImage = () => {
+    if (activeImageUrls.length < 2) {
+      return;
+    }
+
     setCurrentImageIndex((current) =>
-      current === imageUrls.length - 1 ? 0 : current + 1,
+      current === activeImageUrls.length - 1 ? 0 : current + 1,
     );
   };
 
@@ -134,6 +152,7 @@ export function ProductDetailsModal({
     setCurrentImageIndex(0);
     setIsEditing(false);
     setEditFormError(null);
+    setEditableImageUrls(imageUrls);
     setTitle(project.title);
     setDescription(project.description);
     setDetails(project.details ?? "");
@@ -143,6 +162,17 @@ export function ProductDetailsModal({
     setPreviewFocusY(project.previewFocusY ?? 50);
     setCoverImageUrl(imageUrls[0] ?? null);
   }, [imageUrls, project]);
+
+  useEffect(() => {
+    if (activeImageUrls.length === 0) {
+      setCurrentImageIndex(0);
+      return;
+    }
+
+    if (currentImageIndex > activeImageUrls.length - 1) {
+      setCurrentImageIndex(activeImageUrls.length - 1);
+    }
+  }, [activeImageUrls, currentImageIndex]);
 
   const updatePreviewFocusFromPointer = (clientX: number, clientY: number) => {
     const previewElement = previewEditorRef.current;
@@ -159,6 +189,20 @@ export function ProductDetailsModal({
     const y = ((clientY - rect.top) / rect.height) * 100;
     setPreviewFocusX(Math.min(100, Math.max(0, x)));
     setPreviewFocusY(Math.min(100, Math.max(0, y)));
+  };
+
+  const resetEditState = () => {
+    setEditFormError(null);
+    setTitle(project.title);
+    setDescription(project.description);
+    setDetails(project.details ?? "");
+    setStatus(project.status);
+    setSoldPriceInput(project.soldPriceNok?.toString() ?? "");
+    setEditableImageUrls(imageUrls);
+    setCoverImageUrl(imageUrls[0] ?? null);
+    setPreviewFocusX(project.previewFocusX ?? 50);
+    setPreviewFocusY(project.previewFocusY ?? 50);
+    setCurrentImageIndex(0);
   };
 
   const handleUpdateSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -208,6 +252,7 @@ export function ProductDetailsModal({
       details: trimmedDetails || undefined,
       status,
       soldPriceNok,
+      keptImageUrls: editableImageUrls,
       newImageFiles,
       coverImageUrl: coverImageUrl ?? undefined,
       previewFocusX,
@@ -218,6 +263,34 @@ export function ProductDetailsModal({
       setIsEditing(false);
       setEditFormError(null);
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const imageUrlToRemove = editableImageUrls[index];
+    if (!imageUrlToRemove) {
+      return;
+    }
+
+    const nextImageUrls = editableImageUrls.filter((_, currentIndex) => currentIndex !== index);
+    setEditableImageUrls(nextImageUrls);
+
+    if (coverImageUrl === imageUrlToRemove) {
+      setCoverImageUrl(nextImageUrls[0] ?? null);
+      setPreviewFocusX(50);
+      setPreviewFocusY(50);
+    }
+
+    setCurrentImageIndex((current) => {
+      if (current > index) {
+        return current - 1;
+      }
+
+      if (current === index) {
+        return index > 0 ? index - 1 : 0;
+      }
+
+      return current;
+    });
   };
 
   return (
@@ -266,7 +339,7 @@ export function ProductDetailsModal({
                       ›
                     </button>
                     <p className="modal-image-counter">
-                      {currentImageIndex + 1} / {imageUrls.length}
+                      {currentImageIndex + 1} / {activeImageUrls.length}
                     </p>
                   </>
                 ) : null}
@@ -288,6 +361,7 @@ export function ProductDetailsModal({
 
             {isEditing ? (
               <form
+                id={`edit-product-form-${project.id}`}
                 className="product-form modal-edit-form"
                 onSubmit={handleUpdateSubmit}
               >
@@ -333,6 +407,7 @@ export function ProductDetailsModal({
                     <option value="beholdt">Beholdt</option>
                     <option value="vurderes-solgt">Vurderes solgt</option>
                     <option value="solgt">Solgt</option>
+                    <option value="gave">Gave</option>
                   </select>
                 </label>
 
@@ -441,26 +516,6 @@ export function ProductDetailsModal({
                   </p>
                 ) : null}
 
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditFormError(null);
-                    }}
-                    disabled={isUpdating}
-                  >
-                    Avbryt
-                  </button>
-                  <button
-                    type="submit"
-                    className="primary-button"
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? "Lagrer..." : "Lagre endringer"}
-                  </button>
-                </div>
               </form>
             ) : (
               <>
@@ -485,9 +540,9 @@ export function ProductDetailsModal({
               </p>
             ) : null}
 
-            {hasMultipleImages ? (
+            {shouldShowThumbnails ? (
               <div className="modal-thumbnails" aria-label="Flere bilder">
-                {imageUrls.map((url, index) => (
+                {activeImageUrls.map((url, index) => (
                   <button
                     key={url}
                     type="button"
@@ -502,6 +557,27 @@ export function ProductDetailsModal({
                     <img src={url} alt="" />
                     {isEditing && coverImageUrl === url ? (
                       <span className="modal-thumbnail__cover-label">Forside</span>
+                    ) : null}
+                    {isEditing ? (
+                      <span
+                        className="modal-thumbnail__remove"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Fjern bilde ${index + 1}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRemoveImage(index);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleRemoveImage(index);
+                          }
+                        }}
+                      >
+                        ×
+                      </span>
                     ) : null}
                   </button>
                 ))}
@@ -524,12 +600,47 @@ export function ProductDetailsModal({
               </div>
             ) : null}
 
+            {isEditing ? (
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    resetEditState();
+                    setIsEditing(false);
+                  }}
+                  disabled={isUpdating}
+                >
+                  Avbryt
+                </button>
+                <button
+                  type="submit"
+                  form={`edit-product-form-${project.id}`}
+                  className="primary-button"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "Lagrer..." : "Lagre endringer"}
+                </button>
+              </div>
+            ) : null}
+
             {!isEditing ? (
               <div className="modal-actions">
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => onToggleFavorite(project, !project.isFavorite)}
+                  disabled={isUpdating || isDeleting}
+                >
+                  {project.isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    resetEditState();
+                    setIsEditing(true);
+                  }}
                 >
                   Rediger produkt
                 </button>

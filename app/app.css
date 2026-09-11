@@ -19,6 +19,8 @@
 
   --color-status-sold-bg: #e3f2fd;
   --color-status-sold-text: #0f4c81;
+  --color-status-gift-bg: #f3e8ff;
+  --color-status-gift-text: #6b21a8;
 
   --color-overlay: rgba(15, 23, 42, 0.5);
   --color-focus: #9ca3af;
@@ -138,6 +140,14 @@ body {
   border-color: transparent;
 }
 
+.site-nav__link--icon {
+  min-width: 2.25rem;
+  text-align: center;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  font-size: 1rem;
+}
+
 .content {
   width: min(1120px, calc(100% - 2rem));
   margin: 2rem auto 3rem;
@@ -216,7 +226,7 @@ body {
 .primary-button {
   border: 1px solid #d1d5db;
   border-radius: 10px;
-  background: #f8fafc;
+  background: #ffbaf1;
   color: var(--color-text);
   padding: 0.6rem 0.9rem;
   font: inherit;
@@ -381,6 +391,11 @@ body {
 .status-badge--sold {
   background: var(--color-status-sold-bg);
   color: var(--color-status-sold-text);
+}
+
+.status-badge--gift {
+  background: var(--color-status-gift-bg);
+  color: var(--color-status-gift-text);
 }
 
 .sold-price {
@@ -609,6 +624,23 @@ body {
   font-size: 0.65rem;
   border-radius: 999px;
   padding: 0.12rem 0.35rem;
+}
+
+.modal-thumbnail__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 @media (max-width: 800px) {

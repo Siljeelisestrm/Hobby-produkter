@@ -1,4 +1,4 @@
-export type ProjectStatus = "beholdt" | "vurderes-solgt" | "solgt";
+export type ProjectStatus = "beholdt" | "vurderes-solgt" | "solgt" | "gave";
 
 export type ProjectItem = {
   id: string;
@@ -6,6 +6,7 @@ export type ProjectItem = {
   description: string;
   details?: string;
   status: ProjectStatus;
+  isFavorite: boolean;
   imageUrl?: string;
   imageUrls?: string[];
   previewFocusX?: number;

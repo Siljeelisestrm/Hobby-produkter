@@ -9,6 +9,7 @@ type ProductRow = {
   description: string;
   details: string | null;
   status: string;
+  is_favorite: boolean | null;
   sold_price_nok: number | null;
   image_url: string | null;
   extra_image_urls: string[] | null;
@@ -32,6 +33,7 @@ export type UpdateProductInput = {
   details?: string;
   status: ProjectStatus;
   soldPriceNok?: number;
+  keptImageUrls?: string[];
   newImageFiles?: File[];
   coverImageUrl?: string;
   previewFocusX?: number;
@@ -64,7 +66,12 @@ function getStoragePathFromPublicUrl(publicUrl: string): string | null {
 }
 
 function isProjectStatus(value: string): value is ProjectStatus {
-  return value === "beholdt" || value === "vurderes-solgt" || value === "solgt";
+  return (
+    value === "beholdt" ||
+    value === "vurderes-solgt" ||
+    value === "solgt" ||
+    value === "gave"
+  );
 }
 
 function mapProductRow(row: ProductRow): ProjectItem {
@@ -82,6 +89,7 @@ function mapProductRow(row: ProductRow): ProjectItem {
     description: row.description,
     details: row.details ?? undefined,
     status: row.status,
+    isFavorite: row.is_favorite ?? false,
     soldPriceNok: row.sold_price_nok ?? undefined,
     imageUrl: primaryImage,
     imageUrls,
@@ -129,7 +137,7 @@ export async function fetchProducts(): Promise<ProjectItem[]> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .order("created_at", { ascending: false });
 
@@ -160,6 +168,7 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       description: input.description,
       details: input.details ?? null,
       status: input.status,
+      is_favorite: false,
       sold_price_nok: soldPriceNok,
       image_url: imageUrl,
       extra_image_urls: extraImageUrls,
@@ -167,7 +176,7 @@ export async function createProduct(input: CreateProductInput): Promise<ProjectI
       preview_focus_y: 50,
     })
     .select(
-      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
@@ -193,7 +202,12 @@ export async function updateProduct(
     : currentProduct.imageUrl
       ? [currentProduct.imageUrl]
       : [];
-  const mergedImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+  const keptExistingImageUrls = input.keptImageUrls
+    ? input.keptImageUrls.filter((url) => existingImageUrls.includes(url))
+    : existingImageUrls;
+  const mergedImageUrls = Array.from(
+    new Set([...keptExistingImageUrls, ...uploadedImageUrls]),
+  );
   const selectedCoverImageUrl = input.coverImageUrl;
   const orderedImageUrls =
     selectedCoverImageUrl && mergedImageUrls.includes(selectedCoverImageUrl)
@@ -224,12 +238,34 @@ export async function updateProduct(
     })
     .eq("id", currentProduct.id)
     .select(
-      "id, title, description, details, status, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
     )
     .single();
 
   if (error) {
     throw new Error(`Klarte ikke oppdatere produkt: ${error.message}`);
+  }
+
+  return mapProductRow(data as ProductRow);
+}
+
+export async function setProductFavorite(
+  productId: string,
+  isFavorite: boolean,
+): Promise<ProjectItem> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({ is_favorite: isFavorite })
+    .eq("id", productId)
+    .select(
+      "id, title, description, details, status, is_favorite, sold_price_nok, image_url, extra_image_urls, preview_focus_x, preview_focus_y, created_at",
+    )
+    .single();
+
+  if (error) {
+    throw new Error(`Klarte ikke oppdatere favoritt: ${error.message}`);
   }
 
   return mapProductRow(data as ProductRow);

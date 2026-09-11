@@ -5,7 +5,8 @@ create table if not exists public.products (
   title text not null,
   description text not null,
   details text,
-  status text not null check (status in ('beholdt', 'vurderes-solgt', 'solgt')),
+  status text not null check (status in ('beholdt', 'vurderes-solgt', 'solgt', 'gave')),
+  is_favorite boolean not null default false,
   sold_price_nok integer check (sold_price_nok is null or sold_price_nok >= 0),
   image_url text,
   extra_image_urls text[] not null default '{}',
@@ -22,6 +23,16 @@ alter table public.products
 
 alter table public.products
   add column if not exists preview_focus_y real not null default 50;
+
+alter table public.products
+  add column if not exists is_favorite boolean not null default false;
+
+alter table public.products
+  drop constraint if exists products_status_check;
+
+alter table public.products
+  add constraint products_status_check
+  check (status in ('beholdt', 'vurderes-solgt', 'solgt', 'gave'));
 
 alter table public.products enable row level security;
 

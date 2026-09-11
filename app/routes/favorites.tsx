@@ -10,21 +10,15 @@ import {
 } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
 
-export default function Home() {
+export default function Favorites() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(
-    null,
-  );
+  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
-    null,
-  );
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(
-    null,
-  );
+  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -39,8 +33,7 @@ export default function Home() {
         }
       } catch (error) {
         if (!isCancelled) {
-          const message =
-            error instanceof Error ? error.message : "Ukjent feil.";
+          const message = error instanceof Error ? error.message : "Ukjent feil.";
           setErrorMessage(message);
         }
       } finally {
@@ -57,7 +50,9 @@ export default function Home() {
     };
   }, []);
 
-  const hasProjects = projects.length > 0;
+  const favoriteProjects = projects.filter((project) => project.isFavorite);
+  const hasFavoriteProjects = favoriteProjects.length > 0;
+
   const handleSelectProject = (project: ProjectItem) => {
     setDeleteErrorMessage(null);
     setUpdateErrorMessage(null);
@@ -75,10 +70,8 @@ export default function Home() {
       const updatedProduct = await updateProduct(project, input);
       setProjects((currentProjects) =>
         currentProjects.map((currentProject) =>
-          currentProject.id === updatedProduct.id
-            ? updatedProduct
-            : currentProject,
-        ),
+          currentProject.id === updatedProduct.id ? updatedProduct : currentProject
+        )
       );
       setSelectedProject(updatedProduct);
       return true;
@@ -106,9 +99,7 @@ export default function Home() {
     try {
       await deleteProduct(project);
       setProjects((currentProjects) =>
-        currentProjects.filter(
-          (currentProject) => currentProject.id !== project.id,
-        ),
+        currentProjects.filter((currentProject) => currentProject.id !== project.id)
       );
       setSelectedProject(null);
     } catch (error) {
@@ -130,12 +121,10 @@ export default function Home() {
       const updatedProduct = await setProductFavorite(project.id, isFavorite);
       setProjects((currentProjects) =>
         currentProjects.map((currentProject) =>
-          currentProject.id === updatedProduct.id
-            ? updatedProduct
-            : currentProject,
-        ),
+          currentProject.id === updatedProduct.id ? updatedProduct : currentProject
+        )
       );
-      setSelectedProject(updatedProduct);
+      setSelectedProject(updatedProduct.isFavorite ? updatedProduct : null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ukjent feil.";
       setUpdateErrorMessage(message);
@@ -146,29 +135,23 @@ export default function Home() {
 
   return (
     <>
-      <main className="content" aria-label="Prosjektoversikt">
+      <main className="content" aria-label="Favoritter">
         <section className="intro">
-          <h1>Mine hjemmelagde ting</h1>
-          <p>Dette er jo en litt gøyal måte å holde styr på alt.</p>
+          <h1>Favoritter</h1>
+          <p>Produkter du har markert som favoritt.</p>
         </section>
 
-        {isLoading ? (
-          <p className="state-message">Laster produkter...</p>
+        {isLoading ? <p className="state-message">Laster produkter...</p> : null}
+
+        {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
+
+        {!isLoading && !errorMessage && !hasFavoriteProjects ? (
+          <p className="state-message">Ingen favoritter enda.</p>
         ) : null}
 
-        {errorMessage ? (
-          <p className="state-message error">{errorMessage}</p>
-        ) : null}
-
-        {!isLoading && !errorMessage && !hasProjects ? (
-          <p className="state-message">
-            Ingen produkter enda. Legg inn første produkt i Supabase.
-          </p>
-        ) : null}
-
-        {hasProjects ? (
-          <section className="project-grid" aria-label="Prosjekter">
-            {projects.map((project) => (
+        {hasFavoriteProjects ? (
+          <section className="project-grid" aria-label="Favorittprodukter">
+            {favoriteProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}

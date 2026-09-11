@@ -38,7 +38,8 @@ export function AddProductForm({
     if (
       selectedStatus !== "beholdt" &&
       selectedStatus !== "vurderes-solgt" &&
-      selectedStatus !== "solgt"
+      selectedStatus !== "solgt" &&
+      selectedStatus !== "gave"
     ) {
       setFormError("Ugyldig status valgt.");
       return;
@@ -115,6 +116,7 @@ export function AddProductForm({
             <option value="beholdt">Beholdt</option>
             <option value="vurderes-solgt">Vurderes solgt</option>
             <option value="solgt">Solgt</option>
+            <option value="gave">Gave</option>
           </select>
         </label>
 
