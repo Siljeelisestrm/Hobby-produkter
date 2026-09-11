@@ -10,6 +10,8 @@ type ProjectCardProps = {
   onSelect: (project: ProjectItem) => void;
   showOwner?: boolean;
   showLikes?: boolean;
+  showStatus?: boolean;
+  showShareState?: boolean;
 };
 
 export function ProjectCard({
@@ -17,6 +19,8 @@ export function ProjectCard({
   onSelect,
   showOwner = false,
   showLikes = false,
+  showStatus = true,
+  showShareState = false,
 }: ProjectCardProps) {
   const previewImage = project.imageUrls?.[0] ?? project.imageUrl;
 
@@ -50,18 +54,25 @@ export function ProjectCard({
         <div className="project-card__content">
           <div className="project-card__header">
             <h2>{project.title}</h2>
-            <span className={statusClassName[project.status]}>
-              {statusLabel[project.status]}
-            </span>
+            {showStatus ? (
+              <span className={statusClassName[project.status]}>
+                {statusLabel[project.status]}
+              </span>
+            ) : null}
           </div>
 
           {showOwner && project.ownerUsername ? (
             <p className="project-meta">Av {project.ownerUsername}</p>
           ) : null}
+          {showShareState ? (
+            <p className="project-meta">
+              {project.isShared ? "Publisert" : "Ikke publisert"}
+            </p>
+          ) : null}
 
           {project.description ? <p>{project.description}</p> : null}
 
-          {project.status === "solgt" ? (
+          {showStatus && project.status === "solgt" ? (
             typeof project.soldPriceNok === "number" ? (
               <p className="sold-price">
                 Solgt for <strong>{formatCurrencyNok(project.soldPriceNok)}</strong>
@@ -72,7 +83,7 @@ export function ProjectCard({
           ) : null}
 
           {typeof project.madeYear === "number" ? (
-            <p className="project-meta">Laget i {project.madeYear}</p>
+            <p className="project-meta project-meta--year">Laget i {project.madeYear}</p>
           ) : null}
 
           {showLikes ? (

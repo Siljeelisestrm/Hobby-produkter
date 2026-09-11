@@ -110,17 +110,19 @@ export default function Explore() {
 
         {!isLoading && !errorMessage && projects.length > 0 ? (
           <section className="filter-row" aria-label="Filtrering">
-            <label className="form-field filter-field">
-              År
-              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
-                <option value="all">Alle</option>
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <select
+              className="filter-select"
+              aria-label="Filtrer utforsk på år"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+            >
+              <option value="all">Alle år</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </section>
         ) : null}
 
@@ -136,6 +138,7 @@ export default function Explore() {
                 project={project}
                 showOwner
                 showLikes
+                showStatus={false}
                 onSelect={setSelectedProject}
               />
             ))}
@@ -154,6 +157,7 @@ export default function Explore() {
           updateErrorMessage={updateErrorMessage}
           canEdit={false}
           canDelete={false}
+          showStatus={false}
           showFavoriteToggle={false}
           showLikeToggle
           onToggleLike={handleToggleLike}

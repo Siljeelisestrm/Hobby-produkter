@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AuthForm } from "~/components/auth-form";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
+import { useAuth } from "~/context/auth-context";
 import {
   deleteProduct,
-  fetchProducts,
+  fetchUserProducts,
   setProductFavorite,
+  setProductShared,
   type UpdateProductInput,
   updateProduct,
 } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
 
 export default function Favorites() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
@@ -22,12 +26,18 @@ export default function Favorites() {
   const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) {
+      setProjects([]);
+      setIsLoading(false);
+      return;
+    }
+
     let isCancelled = false;
+    setIsLoading(true);
 
     const loadProducts = async () => {
       try {
-        const data = await fetchProducts();
-
+        const data = await fetchUserProducts(user.id);
         if (!isCancelled) {
           setProjects(data);
           setErrorMessage(null);
@@ -44,14 +54,17 @@ export default function Favorites() {
       }
     };
 
-    loadProducts();
+    void loadProducts();
 
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [user]);
 
-  const favoriteProjects = projects.filter((project) => project.isFavorite);
+  const favoriteProjects = useMemo(
+    () => projects.filter((project) => project.isFavorite),
+    [projects],
+  );
   const sortedFavoriteProjects = [...favoriteProjects].sort((a, b) => {
     const yearA = a.madeYear ?? Number.NEGATIVE_INFINITY;
     const yearB = b.madeYear ?? Number.NEGATIVE_INFINITY;
@@ -69,6 +82,7 @@ export default function Favorites() {
         .filter((year): year is number => typeof year === "number"),
     ),
   ).sort((a, b) => b - a);
+
   const filteredFavoriteProjects =
     selectedYear === "all"
       ? sortedFavoriteProjects
@@ -77,12 +91,6 @@ export default function Favorites() {
         );
   const hasFavoriteProjects = filteredFavoriteProjects.length > 0;
   const hasAnyFavorites = favoriteProjects.length > 0;
-
-  const handleSelectProject = (project: ProjectItem) => {
-    setDeleteErrorMessage(null);
-    setUpdateErrorMessage(null);
-    setSelectedProject(project);
-  };
 
   const handleUpdateProduct = async (
     project: ProjectItem,
@@ -158,34 +166,75 @@ export default function Favorites() {
     }
   };
 
+  const handleToggleShare = async (
+    project: ProjectItem,
+    isShared: boolean,
+  ): Promise<void> => {
+    setIsUpdating(true);
+    setUpdateErrorMessage(null);
+
+    try {
+      const updatedProduct = await setProductShared(project.id, isShared);
+      setProjects((currentProjects) =>
+        currentProjects.map((currentProject) =>
+          currentProject.id === updatedProduct.id ? updatedProduct : currentProject
+        )
+      );
+      setSelectedProject(updatedProduct);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Ukjent feil.";
+      setUpdateErrorMessage(message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isAuthLoading) {
+    return (
+      <main className="content">
+        <p className="state-message">Laster bruker...</p>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="content">
+        <section className="intro">
+          <h1>Favoritter</h1>
+          <p>Logg inn for å se favoritter.</p>
+        </section>
+        <AuthForm />
+      </main>
+    );
+  }
+
   return (
     <>
       <main className="content" aria-label="Favoritter">
         <section className="intro">
           <h1>Favoritter</h1>
-          <p>Produkter du har markert som favoritt.</p>
+          <p>Dine favorittmarkerte produkter.</p>
         </section>
 
         {isLoading ? <p className="state-message">Laster produkter...</p> : null}
-
         {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
 
         {!isLoading && !errorMessage && hasAnyFavorites ? (
           <section className="filter-row" aria-label="Filtrering">
-            <label className="form-field filter-field">
-              År
-              <select
-                value={selectedYear}
-                onChange={(event) => setSelectedYear(event.target.value)}
-              >
-                <option value="all">Alle</option>
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <select
+              className="filter-select"
+              aria-label="Filtrer favoritter på år"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+            >
+              <option value="all">Alle år</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </section>
         ) : null}
 
@@ -203,7 +252,9 @@ export default function Favorites() {
               <ProjectCard
                 key={project.id}
                 project={project}
-                onSelect={handleSelectProject}
+                showLikes
+                showShareState
+                onSelect={setSelectedProject}
               />
             ))}
           </section>
@@ -217,7 +268,11 @@ export default function Favorites() {
           deleteErrorMessage={deleteErrorMessage}
           isUpdating={isUpdating}
           updateErrorMessage={updateErrorMessage}
+          showFavoriteToggle
+          showShareToggle
+          shareLabel="Del med venner"
           onToggleFavorite={handleToggleFavorite}
+          onToggleShare={handleToggleShare}
           onUpdate={handleUpdateProduct}
           onDelete={handleDeleteProduct}
           onClose={() => {

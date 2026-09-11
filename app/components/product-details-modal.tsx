@@ -17,6 +17,7 @@ type ProductDetailsModalProps = {
   updateErrorMessage: string | null;
   canEdit?: boolean;
   canDelete?: boolean;
+  showStatus?: boolean;
   showFavoriteToggle?: boolean;
   showShareToggle?: boolean;
   shareLabel?: string;
@@ -43,6 +44,7 @@ export function ProductDetailsModal({
   updateErrorMessage,
   canEdit = true,
   canDelete = true,
+  showStatus = true,
   showFavoriteToggle = true,
   showShareToggle = false,
   shareLabel = "Del med venner",
@@ -344,7 +346,7 @@ export function ProductDetailsModal({
           onClick={onClose}
           aria-label="Lukk detaljvisning"
         >
-          ×
+          <span className="icon-mark icon-mark--close" aria-hidden="true" />
         </button>
 
         <div className="modal-layout">
@@ -364,7 +366,7 @@ export function ProductDetailsModal({
                       onClick={goToPreviousImage}
                       aria-label="Forrige bilde"
                     >
-                      ‹
+                      <span className="modal-image-nav__glyph" aria-hidden="true">‹</span>
                     </button>
                     <button
                       type="button"
@@ -372,7 +374,7 @@ export function ProductDetailsModal({
                       onClick={goToNextImage}
                       aria-label="Neste bilde"
                     >
-                      ›
+                      <span className="modal-image-nav__glyph" aria-hidden="true">›</span>
                     </button>
                     <p className="modal-image-counter">
                       {currentImageIndex + 1} / {activeImageUrls.length}
@@ -390,9 +392,11 @@ export function ProductDetailsModal({
           <div className="modal-details">
             <div>
               <h2>{isEditing ? "Rediger produkt" : project.title}</h2>
-              <span className={statusClassName[isEditing ? status : project.status]}>
-                {statusLabel[isEditing ? status : project.status]}
-              </span>
+              {showStatus ? (
+                <span className={statusClassName[isEditing ? status : project.status]}>
+                  {statusLabel[isEditing ? status : project.status]}
+                </span>
+              ) : null}
               {!isEditing && project.ownerUsername ? (
                 <p className="project-meta">Av {project.ownerUsername}</p>
               ) : null}
@@ -439,21 +443,23 @@ export function ProductDetailsModal({
                   />
                 </label>
 
-                <label className="form-field">
-                  Status
-                  <select
-                    value={status}
-                    onChange={(event) =>
-                      setStatus(event.target.value as ProjectItem["status"])
-                    }
-                    disabled={isUpdating}
-                  >
-                    <option value="beholdt">Beholdt</option>
-                    <option value="vurderes-solgt">Vurderes solgt</option>
-                    <option value="solgt">Solgt</option>
-                    <option value="gave">Gave</option>
-                  </select>
-                </label>
+                {showStatus ? (
+                  <label className="form-field">
+                    Status
+                    <select
+                      value={status}
+                      onChange={(event) =>
+                        setStatus(event.target.value as ProjectItem["status"])
+                      }
+                      disabled={isUpdating}
+                    >
+                      <option value="beholdt">Beholdt</option>
+                      <option value="vurderes-solgt">Vurderes solgt</option>
+                      <option value="solgt">Solgt</option>
+                      <option value="gave">Gave</option>
+                    </select>
+                  </label>
+                ) : null}
 
                 <label className="form-field">
                   År laget (valgfritt)
@@ -468,7 +474,7 @@ export function ProductDetailsModal({
                   />
                 </label>
 
-                {status === "solgt" ? (
+                {showStatus && status === "solgt" ? (
                   <label className="form-field">
                     Salgspris (NOK)
                     <input
@@ -581,7 +587,7 @@ export function ProductDetailsModal({
                   <p className="project-meta">Laget i {project.madeYear}</p>
                 ) : null}
                 {project.details ? <p>{project.details}</p> : null}
-                {project.status === "solgt" ? (
+                {showStatus && project.status === "solgt" ? (
                   typeof project.soldPriceNok === "number" ? (
                     <p className="sold-price">
                       Solgt for{" "}
@@ -619,25 +625,17 @@ export function ProductDetailsModal({
                       <span className="modal-thumbnail__cover-label">Forside</span>
                     ) : null}
                     {isEditing ? (
-                      <span
+                      <button
+                        type="button"
                         className="modal-thumbnail__remove"
-                        role="button"
-                        tabIndex={0}
                         aria-label={`Fjern bilde ${index + 1}`}
                         onClick={(event) => {
                           event.stopPropagation();
                           handleRemoveImage(index);
                         }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            handleRemoveImage(index);
-                          }
-                        }}
                       >
-                        ×
-                      </span>
+                        <span className="icon-mark icon-mark--close icon-mark--small" aria-hidden="true" />
+                      </button>
                     ) : null}
                   </button>
                 ))}

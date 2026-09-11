@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AddProductForm } from "~/components/add-product-form";
 import { AuthForm } from "~/components/auth-form";
 import { ProductDetailsModal } from "~/components/product-details-modal";
@@ -16,11 +17,17 @@ import {
 } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
 
+type ShareFilter = "all" | "shared" | "private";
+
 export default function Home() {
   const { user, profile, isLoading: isAuthLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [shareFilter, setShareFilter] = useState<ShareFilter>("all");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -30,6 +37,11 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false);
   const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(null);
   const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setIsAddModalOpen(params.get("new") === "1");
+  }, [location.search]);
 
   useEffect(() => {
     if (!user) {
@@ -67,15 +79,19 @@ export default function Home() {
     };
   }, [user]);
 
-  const sortedProjects = [...projects].sort((a, b) => {
-    const yearA = a.madeYear ?? Number.NEGATIVE_INFINITY;
-    const yearB = b.madeYear ?? Number.NEGATIVE_INFINITY;
-    if (yearA !== yearB) {
-      return yearB - yearA;
-    }
+  const sortedProjects = useMemo(
+    () =>
+      [...projects].sort((a, b) => {
+        const yearA = a.madeYear ?? Number.NEGATIVE_INFINITY;
+        const yearB = b.madeYear ?? Number.NEGATIVE_INFINITY;
+        if (yearA !== yearB) {
+          return yearB - yearA;
+        }
 
-    return b.createdAt.localeCompare(a.createdAt);
-  });
+        return b.createdAt.localeCompare(a.createdAt);
+      }),
+    [projects],
+  );
 
   const availableYears = Array.from(
     new Set(
@@ -85,13 +101,30 @@ export default function Home() {
     ),
   ).sort((a, b) => b - a);
 
-  const filteredProjects =
-    selectedYear === "all"
-      ? sortedProjects
-      : sortedProjects.filter((project) => project.madeYear === Number(selectedYear));
+  const filteredProjects = sortedProjects.filter((project) => {
+    const yearPass = selectedYear === "all" || project.madeYear === Number(selectedYear);
+    const sharePass =
+      shareFilter === "all" ||
+      (shareFilter === "shared" ? project.isShared : !project.isShared);
+
+    return yearPass && sharePass;
+  });
 
   const hasProjects = filteredProjects.length > 0;
   const hasAnyProjects = projects.length > 0;
+
+  const closeAddModal = () => {
+    const params = new URLSearchParams(location.search);
+    params.delete("new");
+    const query = params.toString();
+    navigate(query ? `/?${query}` : "/", { replace: true });
+  };
+
+  const openAddModal = () => {
+    const params = new URLSearchParams(location.search);
+    params.set("new", "1");
+    navigate(`/?${params.toString()}`, { replace: false });
+  };
 
   const handleSelectProject = (project: ProjectItem) => {
     setDeleteErrorMessage(null);
@@ -212,7 +245,11 @@ export default function Home() {
   };
 
   if (isAuthLoading) {
-    return <main className="content"><p className="state-message">Laster bruker...</p></main>;
+    return (
+      <main className="content">
+        <p className="state-message">Laster bruker...</p>
+      </main>
+    );
   }
 
   if (!user) {
@@ -231,7 +268,18 @@ export default function Home() {
     <>
       <main className="content" aria-label="Min side">
         <section className="intro">
-          <h1>Min side</h1>
+          <div className="intro-top">
+            <h1>Min side</h1>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Legg til produkt"
+              title="Legg til produkt"
+              onClick={openAddModal}
+            >
+              <span className="icon-mark icon-mark--plus" aria-hidden="true" />
+            </button>
+          </div>
           <p>Hei {profile?.username ?? "der"}! Her ser du kun dine egne produkter.</p>
         </section>
 
@@ -239,27 +287,40 @@ export default function Home() {
         {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
 
         {!isLoading && !errorMessage && hasAnyProjects ? (
-          <section className="filter-row" aria-label="Filtrering">
-            <label className="form-field filter-field">
-              År
-              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
-                <option value="all">Alle</option>
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <section className="filter-row filter-row--double" aria-label="Filtrering">
+            <select
+              className="filter-select"
+              aria-label="Filtrer på år"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+            >
+              <option value="all">Alle år</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="filter-select"
+              aria-label="Filtrer på publisering"
+              value={shareFilter}
+              onChange={(event) => setShareFilter(event.target.value as ShareFilter)}
+            >
+              <option value="all">Alle</option>
+              <option value="shared">Publisert</option>
+              <option value="private">Ikke publisert</option>
+            </select>
           </section>
         ) : null}
 
         {!isLoading && !errorMessage && !hasAnyProjects ? (
-          <p className="state-message">Ingen produkter enda. Legg inn ditt første under.</p>
+          <p className="state-message">Ingen produkter enda. Trykk + for å legge til.</p>
         ) : null}
 
         {!isLoading && !errorMessage && hasAnyProjects && !hasProjects ? (
-          <p className="state-message">Ingen produkter for valgt år.</p>
+          <p className="state-message">Ingen produkter for valgt filter.</p>
         ) : null}
 
         {hasProjects ? (
@@ -269,21 +330,40 @@ export default function Home() {
                 key={project.id}
                 project={project}
                 showLikes
+                showShareState
                 onSelect={handleSelectProject}
               />
             ))}
           </section>
         ) : null}
-
-        <section className="create-section" aria-label="Legg til produkt">
-          <AddProductForm
-            isSubmitting={isCreating}
-            submitError={createErrorMessage}
-            submitSuccess={createSuccessMessage}
-            onSubmit={handleCreateProduct}
-          />
-        </section>
       </main>
+
+      {isAddModalOpen ? (
+        <div className="modal-overlay" role="presentation" onClick={closeAddModal}>
+          <div
+            className="modal-panel add-product-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Legg til produkt"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={closeAddModal}
+              aria-label="Lukk legg til produkt"
+            >
+              <span className="icon-mark icon-mark--close" aria-hidden="true" />
+            </button>
+            <AddProductForm
+              isSubmitting={isCreating}
+              submitError={createErrorMessage}
+              submitSuccess={createSuccessMessage}
+              onSubmit={handleCreateProduct}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {selectedProject ? (
         <ProductDetailsModal

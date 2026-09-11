@@ -86,6 +86,18 @@ export function SiteHeader() {
 
         {user ? (
           <div className="site-user">
+            <NavLink
+              to="/favoritter"
+              className={({ isActive }) =>
+                isActive
+                  ? "header-icon-link header-icon-link--active"
+                  : "header-icon-link"
+              }
+              aria-label="Favoritter"
+              title="Favoritter"
+            >
+              ❤
+            </NavLink>
             <span className="site-user__name">{profile?.username ?? user.email}</span>
             <button
               type="button"
