@@ -4,11 +4,7 @@ import { AuthForm } from "~/components/auth-form";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
 import { useAuth } from "~/context/auth-context";
-import {
-  fetchSharedProducts,
-  toggleProductLike,
-  type UpdateProductInput,
-} from "~/lib/products";
+import { fetchSharedProducts, toggleProductLike } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
 
 export default function Explore() {
@@ -102,10 +98,9 @@ export default function Explore() {
 
   return (
     <>
-      <main className="content" aria-label="Utforsk">
+      <main className="content content--feed" aria-label="Utforsk">
         <section className="intro">
           <h1>Utforsk</h1>
-          <p>Produkter som brukere har delt med venner.</p>
         </section>
 
         {!isAuthLoading && !user ? (
@@ -117,24 +112,6 @@ export default function Explore() {
         ) : null}
         {errorMessage ? (
           <p className="state-message error">{errorMessage}</p>
-        ) : null}
-
-        {!isLoading && !errorMessage && projects.length > 0 ? (
-          <section className="filter-row" aria-label="Filtrering">
-            <select
-              className="filter-select"
-              aria-label="Filtrer utforsk på år"
-              value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value)}
-            >
-              <option value="all">Alle år</option>
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </section>
         ) : null}
 
         {!isLoading && !errorMessage && filteredProjects.length === 0 ? (
@@ -149,6 +126,9 @@ export default function Explore() {
                 project={project}
                 showOwner
                 showLikes
+                showLikeButton
+                isLikeUpdating={isUpdating}
+                onToggleLike={handleToggleLike}
                 showStatus={false}
                 ownerProfileHref={
                   project.ownerUsername
@@ -176,10 +156,7 @@ export default function Explore() {
           showStatus={false}
           showFavoriteToggle={false}
           showLikeToggle
-          onToggleLike={handleToggleLike}
-          onUpdate={async (_project: ProjectItem, _input: UpdateProductInput) =>
-            false
-          }
+          onUpdate={async () => false}
           onDelete={async () => {}}
           onClose={() => {
             setUpdateErrorMessage(null);

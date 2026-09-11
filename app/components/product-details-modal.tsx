@@ -27,7 +27,6 @@ type ProductDetailsModalProps = {
     isFavorite: boolean,
   ) => Promise<void>;
   onToggleShare?: (project: ProjectItem, isShared: boolean) => Promise<void>;
-  onToggleLike?: (project: ProjectItem, shouldLike: boolean) => Promise<void>;
   onUpdate: (
     project: ProjectItem,
     input: UpdateProductInput,
@@ -51,7 +50,6 @@ export function ProductDetailsModal({
   showLikeToggle = false,
   onToggleFavorite,
   onToggleShare,
-  onToggleLike,
   onUpdate,
   onDelete,
   onClose,
@@ -66,20 +64,29 @@ export function ProductDetailsModal({
 
     return project.imageUrl ? [project.imageUrl] : [];
   }, [project.imageUrl, project.imageUrls]);
-  const [editableImageUrls, setEditableImageUrls] = useState<string[]>(imageUrls);
+  const [editableImageUrls, setEditableImageUrls] =
+    useState<string[]>(imageUrls);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(project.title);
   const [description, setDescription] = useState(project.description ?? "");
   const [details, setDetails] = useState(project.details ?? "");
-  const [madeYearInput, setMadeYearInput] = useState(project.madeYear?.toString() ?? "");
+  const [madeYearInput, setMadeYearInput] = useState(
+    project.madeYear?.toString() ?? "",
+  );
   const [status, setStatus] = useState(project.status);
   const [soldPriceInput, setSoldPriceInput] = useState(
     project.soldPriceNok?.toString() ?? "",
   );
-  const [previewFocusX, setPreviewFocusX] = useState(project.previewFocusX ?? 50);
-  const [previewFocusY, setPreviewFocusY] = useState(project.previewFocusY ?? 50);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(imageUrls[0] ?? null);
+  const [previewFocusX, setPreviewFocusX] = useState(
+    project.previewFocusX ?? 50,
+  );
+  const [previewFocusY, setPreviewFocusY] = useState(
+    project.previewFocusY ?? 50,
+  );
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(
+    imageUrls[0] ?? null,
+  );
   const [editFormError, setEditFormError] = useState<string | null>(null);
   const [isDraggingPreview, setIsDraggingPreview] = useState(false);
   const [dragPointerId, setDragPointerId] = useState<number | null>(null);
@@ -250,7 +257,9 @@ export function ProductDetailsModal({
         parsedYear < 1900 ||
         parsedYear > maxAllowedYear
       ) {
-        setEditFormError(`Årstall må være et heltall mellom 1900 og ${maxAllowedYear}.`);
+        setEditFormError(
+          `Årstall må være et heltall mellom 1900 og ${maxAllowedYear}.`,
+        );
         return;
       }
 
@@ -309,7 +318,9 @@ export function ProductDetailsModal({
       return;
     }
 
-    const nextImageUrls = editableImageUrls.filter((_, currentIndex) => currentIndex !== index);
+    const nextImageUrls = editableImageUrls.filter(
+      (_, currentIndex) => currentIndex !== index,
+    );
     setEditableImageUrls(nextImageUrls);
 
     if (coverImageUrl === imageUrlToRemove) {
@@ -366,7 +377,12 @@ export function ProductDetailsModal({
                       onClick={goToPreviousImage}
                       aria-label="Forrige bilde"
                     >
-                      <span className="modal-image-nav__glyph" aria-hidden="true">‹</span>
+                      <span
+                        className="modal-image-nav__glyph"
+                        aria-hidden="true"
+                      >
+                        ‹
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -374,7 +390,12 @@ export function ProductDetailsModal({
                       onClick={goToNextImage}
                       aria-label="Neste bilde"
                     >
-                      <span className="modal-image-nav__glyph" aria-hidden="true">›</span>
+                      <span
+                        className="modal-image-nav__glyph"
+                        aria-hidden="true"
+                      >
+                        ›
+                      </span>
                     </button>
                     <p className="modal-image-counter">
                       {currentImageIndex + 1} / {activeImageUrls.length}
@@ -393,7 +414,11 @@ export function ProductDetailsModal({
             <div>
               <h2>{isEditing ? "Rediger produkt" : project.title}</h2>
               {showStatus ? (
-                <span className={statusClassName[isEditing ? status : project.status]}>
+                <span
+                  className={
+                    statusClassName[isEditing ? status : project.status]
+                  }
+                >
                   {statusLabel[isEditing ? status : project.status]}
                 </span>
               ) : null}
@@ -402,7 +427,8 @@ export function ProductDetailsModal({
               ) : null}
               {!isEditing && showLikeToggle ? (
                 <p className="project-meta">
-                  {project.likeCount} {project.likeCount === 1 ? "like" : "likes"}
+                  {project.likeCount}{" "}
+                  {project.likeCount === 1 ? "like" : "likes"}
                 </p>
               ) : null}
             </div>
@@ -517,7 +543,10 @@ export function ProductDetailsModal({
                         event.preventDefault();
                         setIsDraggingPreview(true);
                         setDragPointerId(event.pointerId);
-                        updatePreviewFocusFromPointer(event.clientX, event.clientY);
+                        updatePreviewFocusFromPointer(
+                          event.clientX,
+                          event.clientY,
+                        );
                       }}
                     >
                       <img
@@ -578,7 +607,6 @@ export function ProductDetailsModal({
                     {updateErrorMessage}
                   </p>
                 ) : null}
-
               </form>
             ) : (
               <>
@@ -622,7 +650,9 @@ export function ProductDetailsModal({
                   >
                     <img src={url} alt="" />
                     {isEditing && coverImageUrl === url ? (
-                      <span className="modal-thumbnail__cover-label">Forside</span>
+                      <span className="modal-thumbnail__cover-label">
+                        Forside
+                      </span>
                     ) : null}
                     {isEditing ? (
                       <button
@@ -634,7 +664,10 @@ export function ProductDetailsModal({
                           handleRemoveImage(index);
                         }}
                       >
-                        <span className="icon-mark icon-mark--close icon-mark--small" aria-hidden="true" />
+                        <span
+                          className="icon-mark icon-mark--close icon-mark--small"
+                          aria-hidden="true"
+                        />
                       </button>
                     ) : null}
                   </button>
@@ -688,10 +721,14 @@ export function ProductDetailsModal({
                   <button
                     type="button"
                     className="secondary-button"
-                    onClick={() => onToggleFavorite?.(project, !project.isFavorite)}
+                    onClick={() =>
+                      onToggleFavorite?.(project, !project.isFavorite)
+                    }
                     disabled={isUpdating || isDeleting}
                   >
-                    {project.isFavorite ? "Fjern fra favoritter" : "Legg til favoritter"}
+                    {project.isFavorite
+                      ? "Fjern fra favoritter"
+                      : "Legg til favoritter"}
                   </button>
                 ) : null}
                 {showShareToggle ? (
@@ -704,16 +741,7 @@ export function ProductDetailsModal({
                     {project.isShared ? "Ikke del med venner" : shareLabel}
                   </button>
                 ) : null}
-                {showLikeToggle ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onToggleLike?.(project, !project.likedByMe)}
-                    disabled={isUpdating}
-                  >
-                    {project.likedByMe ? "Fjern like" : "Lik produkt"}
-                  </button>
-                ) : null}
+
                 {canEdit ? (
                   <button
                     type="button"

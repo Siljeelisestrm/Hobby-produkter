@@ -41,7 +41,10 @@ export default function UsersPage() {
   }, []);
 
   const visibleProfiles = useMemo(
-    () => profiles.filter((profile) => profile.sharedCount > 0),
+    () =>
+      profiles
+        .filter((profile) => profile.sharedCount > 0)
+        .sort((a, b) => b.sharedCount - a.sharedCount || a.username.localeCompare(b.username)),
     [profiles],
   );
 
@@ -51,6 +54,21 @@ export default function UsersPage() {
         <h1>Brukere</h1>
         <p>Finn profiler og se hva andre har delt.</p>
       </section>
+
+      {!isLoading && !errorMessage && visibleProfiles.length > 0 ? (
+        <section className="users-summary" aria-label="Oppsummering av brukere">
+          <p>
+            <strong>{visibleProfiles.length}</strong>{" "}
+            {visibleProfiles.length === 1 ? "aktiv profil" : "aktive profiler"}
+          </p>
+          <p>
+            <strong>
+              {visibleProfiles.reduce((total, profile) => total + profile.sharedCount, 0)}
+            </strong>{" "}
+            delte produkter totalt
+          </p>
+        </section>
+      ) : null}
 
       {isLoading ? <p className="state-message">Laster brukere...</p> : null}
       {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
@@ -76,8 +94,9 @@ export default function UsersPage() {
               </div>
               <div className="user-card__content">
                 <h2>{profile.username}</h2>
+                <p className="user-card__handle">@{profile.username}</p>
                 {profile.bio ? <p>{profile.bio}</p> : null}
-                <span>
+                <span className="user-card__count">
                   {profile.sharedCount} delt{" "}
                   {profile.sharedCount === 1 ? "produkt" : "produkter"}
                 </span>
