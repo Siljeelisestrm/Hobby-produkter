@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AddProductForm } from "~/components/add-product-form";
 import { AuthForm } from "~/components/auth-form";
+import { DashboardPanel } from "~/components/dashboard-panel";
 import { ProductDetailsModal } from "~/components/product-details-modal";
 import { ProjectCard } from "~/components/project-card";
 import { useAuth } from "~/context/auth-context";
@@ -18,12 +19,14 @@ import {
 import type { ProjectItem } from "~/types/project";
 
 type ShareFilter = "all" | "shared" | "private";
+type HomeView = "products" | "dashboard";
 
 export default function Home() {
   const { user, profile, isLoading: isAuthLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [homeView, setHomeView] = useState<HomeView>("products");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [shareFilter, setShareFilter] = useState<ShareFilter>("all");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
@@ -270,71 +273,107 @@ export default function Home() {
         <section className="intro">
           <div className="intro-top">
             <h1>Min side</h1>
+            {homeView === "products" ? (
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Legg til produkt"
+                title="Legg til produkt"
+                onClick={openAddModal}
+              >
+                <span className="icon-mark icon-mark--plus" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+          <p>Hei {profile?.username ?? "der"}!</p>
+          <div className="view-toggle" role="tablist" aria-label="Visning">
             <button
               type="button"
-              className="icon-button"
-              aria-label="Legg til produkt"
-              title="Legg til produkt"
-              onClick={openAddModal}
+              role="tab"
+              aria-selected={homeView === "products"}
+              className={
+                homeView === "products"
+                  ? "view-toggle__button is-active"
+                  : "view-toggle__button"
+              }
+              onClick={() => setHomeView("products")}
             >
-              <span className="icon-mark icon-mark--plus" aria-hidden="true" />
+              Produkter/profil
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={homeView === "dashboard"}
+              className={
+                homeView === "dashboard"
+                  ? "view-toggle__button is-active"
+                  : "view-toggle__button"
+              }
+              onClick={() => setHomeView("dashboard")}
+            >
+              Dashboard
             </button>
           </div>
-          <p>Hei {profile?.username ?? "der"}! Her ser du kun dine egne produkter.</p>
         </section>
 
-        {isLoading ? <p className="state-message">Laster produkter...</p> : null}
-        {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
+        {homeView === "dashboard" ? <DashboardPanel ownerId={user.id} /> : null}
 
-        {!isLoading && !errorMessage && hasAnyProjects ? (
-          <section className="filter-row filter-row--double" aria-label="Filtrering">
-            <select
-              className="filter-select"
-              aria-label="Filtrer på år"
-              value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value)}
-            >
-              <option value="all">Alle år</option>
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+        {homeView === "products" ? (
+          <>
+            {isLoading ? <p className="state-message">Laster produkter...</p> : null}
+            {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
 
-            <select
-              className="filter-select"
-              aria-label="Filtrer på publisering"
-              value={shareFilter}
-              onChange={(event) => setShareFilter(event.target.value as ShareFilter)}
-            >
-              <option value="all">Alle</option>
-              <option value="shared">Publisert</option>
-              <option value="private">Ikke publisert</option>
-            </select>
-          </section>
-        ) : null}
+            {!isLoading && !errorMessage && hasAnyProjects ? (
+              <section className="filter-row filter-row--double" aria-label="Filtrering">
+                <select
+                  className="filter-select"
+                  aria-label="Filtrer på år"
+                  value={selectedYear}
+                  onChange={(event) => setSelectedYear(event.target.value)}
+                >
+                  <option value="all">Alle år</option>
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
 
-        {!isLoading && !errorMessage && !hasAnyProjects ? (
-          <p className="state-message">Ingen produkter enda. Trykk + for å legge til.</p>
-        ) : null}
+                <select
+                  className="filter-select"
+                  aria-label="Filtrer på publisering"
+                  value={shareFilter}
+                  onChange={(event) => setShareFilter(event.target.value as ShareFilter)}
+                >
+                  <option value="all">Alle</option>
+                  <option value="shared">Publisert</option>
+                  <option value="private">Ikke publisert</option>
+                </select>
+              </section>
+            ) : null}
 
-        {!isLoading && !errorMessage && hasAnyProjects && !hasProjects ? (
-          <p className="state-message">Ingen produkter for valgt filter.</p>
-        ) : null}
+            {!isLoading && !errorMessage && !hasAnyProjects ? (
+              <p className="state-message">Ingen produkter enda. Trykk + for å legge til.</p>
+            ) : null}
 
-        {hasProjects ? (
-          <section className="project-grid" aria-label="Produkter">
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                showLikes
-                showShareState
-                onSelect={handleSelectProject}
-              />
-            ))}
-          </section>
+            {!isLoading && !errorMessage && hasAnyProjects && !hasProjects ? (
+              <p className="state-message">Ingen produkter for valgt filter.</p>
+            ) : null}
+
+            {hasProjects ? (
+              <section className="project-grid" aria-label="Produkter">
+                {filteredProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    showLikes
+                    showShareState
+                    onSelect={handleSelectProject}
+                  />
+                ))}
+              </section>
+            ) : null}
+          </>
         ) : null}
       </main>
 

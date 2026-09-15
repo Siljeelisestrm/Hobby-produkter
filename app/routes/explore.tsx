@@ -100,7 +100,17 @@ export default function Explore() {
     <>
       <main className="content content--feed" aria-label="Utforsk">
         <section className="intro">
-          <h1>Utforsk</h1>
+          <div className="intro-top">
+            <h1>Utforsk</h1>
+            <Link
+              to="/brukere"
+              className="icon-button"
+              aria-label="Se alle brukere"
+              title="Se alle brukere"
+            >
+              <span aria-hidden="true">👥</span>
+            </Link>
+          </div>
         </section>
 
         {!isAuthLoading && !user ? (

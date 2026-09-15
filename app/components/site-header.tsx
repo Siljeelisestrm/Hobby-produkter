@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { GiSewingString } from "react-icons/gi";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "~/context/auth-context";
 import { signOut } from "~/lib/auth";
+import { CgProfile } from "react-icons/cg";
+import { MdOutlineExplore } from "react-icons/md";
 
 const LOGO_SRC = `${import.meta.env.BASE_URL}images/logo.png`;
 
@@ -69,7 +72,11 @@ export function SiteHeader() {
 
         <nav className="site-nav" aria-label="Hovedmeny" ref={navRef}>
           <span
-            className={indicatorStyle.ready ? "site-nav__indicator" : "site-nav__indicator is-hidden"}
+            className={
+              indicatorStyle.ready
+                ? "site-nav__indicator"
+                : "site-nav__indicator is-hidden"
+            }
             style={{
               width: `${indicatorStyle.width}px`,
               transform: `translateX(${indicatorStyle.left}px)`,
@@ -78,25 +85,19 @@ export function SiteHeader() {
           />
           <NavLink to="/utforsk" className={navClassName}>
             <span className="site-nav__icon" aria-hidden="true">
-              🧭
+              <MdOutlineExplore />
             </span>
             <span className="site-nav__text">Utforsk</span>
           </NavLink>
-          <NavLink to="/favoritter" className={navClassName}>
+          <NavLink to="/bibliotek" className={navClassName}>
             <span className="site-nav__icon" aria-hidden="true">
-              ♡
+              <GiSewingString />
             </span>
-            <span className="site-nav__text">Favoritter</span>
-          </NavLink>
-          <NavLink to="/brukere" className={navClassName}>
-            <span className="site-nav__icon" aria-hidden="true">
-              👥
-            </span>
-            <span className="site-nav__text">Brukere</span>
+            <span className="site-nav__text">Bibliotek</span>
           </NavLink>
           <NavLink to="/" end className={navClassName}>
             <span className="site-nav__icon" aria-hidden="true">
-              👤
+              <CgProfile />
             </span>
             <span className="site-nav__text">Min side</span>
           </NavLink>
@@ -104,7 +105,9 @@ export function SiteHeader() {
 
         {user ? (
           <div className="site-user">
-            <span className="site-user__name">{profile?.username ?? user.email}</span>
+            <span className="site-user__name">
+              {profile?.username ?? user.email}
+            </span>
             <button
               type="button"
               className="secondary-button site-user__logout"

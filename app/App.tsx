@@ -3,8 +3,8 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { AuthProvider } from "~/context/auth-context";
 import ExplorePage from "~/routes/explore";
-import FavoritesPage from "~/routes/favorites";
 import HomePage from "~/routes/home";
+import StashPage from "~/routes/stash";
 import UserProfilePage from "~/routes/user-profile";
 import UsersPage from "~/routes/users";
 import { SiteHeader } from "~/components/site-header";
@@ -19,9 +19,9 @@ const routeMeta: Record<string, { title: string; description: string }> = {
     title: "Utforsk | Hjemmelagde Ting",
     description: "Utforsk produkter som andre brukere har delt.",
   },
-  "/favoritter": {
-    title: "Favoritter | Hjemmelagde Ting",
-    description: "Produkter du har markert som favoritt.",
+  "/bibliotek": {
+    title: "Hobbybibliotek | Hjemmelagde Ting",
+    description: "Oversikt over garn, stoff, perler og annet du har liggende.",
   },
   "/brukere": {
     title: "Brukere | Hjemmelagde Ting",
@@ -64,7 +64,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/utforsk" element={<ExplorePage />} />
-          <Route path="/favoritter" element={<FavoritesPage />} />
+          <Route path="/bibliotek" element={<StashPage />} />
           <Route path="/profil" element={<Navigate to="/" replace />} />
           <Route path="/profil/:username" element={<UserProfilePage />} />
           <Route path="/brukere" element={<UsersPage />} />
