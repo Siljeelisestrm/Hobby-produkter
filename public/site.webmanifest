@@ -1,0 +1,15 @@
+{
+  "name": "Hjemmelagde Ting",
+  "short_name": "Hjemmelagde Ting",
+  "icons": [
+    {
+      "src": "hobby-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#f6e4ea",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "."
+}
