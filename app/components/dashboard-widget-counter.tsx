@@ -1,4 +1,5 @@
 import type { CounterWidgetData } from "~/types/dashboard";
+import { FaArrowRotateLeft } from "react-icons/fa6";
 
 type CounterWidgetProps = {
   data: CounterWidgetData;
@@ -33,7 +34,7 @@ export function CounterWidget({ data, onChange }: CounterWidgetProps) {
           className="widget-counter__button widget-counter__button--reset"
           onClick={() => onChange({ ...data, count: 0 })}
         >
-          Nullstill
+          <FaArrowRotateLeft />
         </button>
         <button
           type="button"

@@ -26,20 +26,30 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [homeView, setHomeView] = useState<HomeView>("products");
+  const [homeView, setHomeView] = useState<HomeView>("dashboard");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [shareFilter, setShareFilter] = useState<ShareFilter>("all");
-  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(
+    null,
+  );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null,
+  );
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(null);
+  const [updateErrorMessage, setUpdateErrorMessage] = useState<string | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
-  const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(null);
-  const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null);
+  const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [createSuccessMessage, setCreateSuccessMessage] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -65,7 +75,8 @@ export default function Home() {
         }
       } catch (error) {
         if (!isCancelled) {
-          const message = error instanceof Error ? error.message : "Ukjent feil.";
+          const message =
+            error instanceof Error ? error.message : "Ukjent feil.";
           setErrorMessage(message);
         }
       } finally {
@@ -105,7 +116,8 @@ export default function Home() {
   ).sort((a, b) => b - a);
 
   const filteredProjects = sortedProjects.filter((project) => {
-    const yearPass = selectedYear === "all" || project.madeYear === Number(selectedYear);
+    const yearPass =
+      selectedYear === "all" || project.madeYear === Number(selectedYear);
     const sharePass =
       shareFilter === "all" ||
       (shareFilter === "shared" ? project.isShared : !project.isShared);
@@ -135,7 +147,9 @@ export default function Home() {
     setSelectedProject(project);
   };
 
-  const handleCreateProduct = async (input: CreateProductInput): Promise<boolean> => {
+  const handleCreateProduct = async (
+    input: CreateProductInput,
+  ): Promise<boolean> => {
     if (!user) {
       setCreateErrorMessage("Du må være logget inn for å lage produkter.");
       return false;
@@ -169,7 +183,9 @@ export default function Home() {
     try {
       const updatedProduct = await updateProduct(project, input);
       setProjects((current) =>
-        current.map((item) => (item.id === updatedProduct.id ? updatedProduct : item)),
+        current.map((item) =>
+          item.id === updatedProduct.id ? updatedProduct : item,
+        ),
       );
       setSelectedProject(updatedProduct);
       return true;
@@ -195,7 +211,9 @@ export default function Home() {
 
     try {
       await deleteProduct(project);
-      setProjects((current) => current.filter((item) => item.id !== project.id));
+      setProjects((current) =>
+        current.filter((item) => item.id !== project.id),
+      );
       setSelectedProject(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ukjent feil.";
@@ -215,7 +233,9 @@ export default function Home() {
     try {
       const updatedProduct = await setProductFavorite(project.id, isFavorite);
       setProjects((current) =>
-        current.map((item) => (item.id === updatedProduct.id ? updatedProduct : item)),
+        current.map((item) =>
+          item.id === updatedProduct.id ? updatedProduct : item,
+        ),
       );
       setSelectedProject(updatedProduct);
     } catch (error) {
@@ -236,7 +256,9 @@ export default function Home() {
     try {
       const updatedProduct = await setProductShared(project.id, isShared);
       setProjects((current) =>
-        current.map((item) => (item.id === updatedProduct.id ? updatedProduct : item)),
+        current.map((item) =>
+          item.id === updatedProduct.id ? updatedProduct : item,
+        ),
       );
       setSelectedProject(updatedProduct);
     } catch (error) {
@@ -273,58 +295,48 @@ export default function Home() {
         <section className="intro">
           <div className="intro-top">
             <h1>Min side</h1>
-            {homeView === "products" ? (
+
+            <div className="view-toggle" role="tablist" aria-label="Visning">
               <button
                 type="button"
-                className="icon-button"
-                aria-label="Legg til produkt"
-                title="Legg til produkt"
-                onClick={openAddModal}
+                role="tab"
+                aria-selected={homeView === "dashboard"}
+                className={
+                  homeView === "dashboard"
+                    ? "view-toggle__button is-active"
+                    : "view-toggle__button"
+                }
+                onClick={() => setHomeView("dashboard")}
               >
-                <span className="icon-mark icon-mark--plus" aria-hidden="true" />
+                Dashboard
               </button>
-            ) : null}
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={homeView === "products"}
+                className={
+                  homeView === "products"
+                    ? "view-toggle__button is-active"
+                    : "view-toggle__button"
+                }
+                onClick={() => setHomeView("products")}
+              >
+                Produkter
+              </button>
+            </div>
           </div>
-          <p>Hei {profile?.username ?? "der"}!</p>
-          <div className="view-toggle" role="tablist" aria-label="Visning">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={homeView === "products"}
-              className={
-                homeView === "products"
-                  ? "view-toggle__button is-active"
-                  : "view-toggle__button"
-              }
-              onClick={() => setHomeView("products")}
-            >
-              Produkter/profil
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={homeView === "dashboard"}
-              className={
-                homeView === "dashboard"
-                  ? "view-toggle__button is-active"
-                  : "view-toggle__button"
-              }
-              onClick={() => setHomeView("dashboard")}
-            >
-              Dashboard
-            </button>
-          </div>
-        </section>
 
-        {homeView === "dashboard" ? <DashboardPanel ownerId={user.id} /> : null}
-
-        {homeView === "products" ? (
-          <>
-            {isLoading ? <p className="state-message">Laster produkter...</p> : null}
-            {errorMessage ? <p className="state-message error">{errorMessage}</p> : null}
-
-            {!isLoading && !errorMessage && hasAnyProjects ? (
-              <section className="filter-row filter-row--double" aria-label="Filtrering">
+          {/* Kontroller for produktsiden */}
+          {homeView === "products" &&
+          !isLoading &&
+          !errorMessage &&
+          hasAnyProjects ? (
+            <div className="products-toolbar">
+              <section
+                className="filter-row filter-row--double"
+                aria-label="Filtrering"
+              >
                 <select
                   className="filter-select"
                   aria-label="Filtrer på år"
@@ -343,17 +355,50 @@ export default function Home() {
                   className="filter-select"
                   aria-label="Filtrer på publisering"
                   value={shareFilter}
-                  onChange={(event) => setShareFilter(event.target.value as ShareFilter)}
+                  onChange={(event) =>
+                    setShareFilter(event.target.value as ShareFilter)
+                  }
                 >
                   <option value="all">Alle</option>
                   <option value="shared">Publisert</option>
                   <option value="private">Ikke publisert</option>
                 </select>
               </section>
+
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Legg til produkt"
+                title="Legg til produkt"
+                onClick={openAddModal}
+              >
+                <span
+                  className="icon-mark icon-mark--plus"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+          ) : null}
+        </section>
+
+        {/* Dashboard */}
+        {homeView === "dashboard" ? <DashboardPanel ownerId={user.id} /> : null}
+
+        {/* Produkter */}
+        {homeView === "products" ? (
+          <>
+            {isLoading ? (
+              <p className="state-message">Laster produkter...</p>
+            ) : null}
+
+            {errorMessage ? (
+              <p className="state-message error">{errorMessage}</p>
             ) : null}
 
             {!isLoading && !errorMessage && !hasAnyProjects ? (
-              <p className="state-message">Ingen produkter enda. Trykk + for å legge til.</p>
+              <p className="state-message">
+                Ingen produkter enda. Trykk + for å legge til.
+              </p>
             ) : null}
 
             {!isLoading && !errorMessage && hasAnyProjects && !hasProjects ? (
@@ -377,8 +422,13 @@ export default function Home() {
         ) : null}
       </main>
 
+      {/* Legg til produkt-modal */}
       {isAddModalOpen ? (
-        <div className="modal-overlay" role="presentation" onClick={closeAddModal}>
+        <div
+          className="modal-overlay"
+          role="presentation"
+          onClick={closeAddModal}
+        >
           <div
             className="modal-panel add-product-modal"
             role="dialog"
@@ -394,6 +444,7 @@ export default function Home() {
             >
               <span className="icon-mark icon-mark--close" aria-hidden="true" />
             </button>
+
             <AddProductForm
               isSubmitting={isCreating}
               submitError={createErrorMessage}
@@ -404,6 +455,7 @@ export default function Home() {
         </div>
       ) : null}
 
+      {/* Produktdetaljer */}
       {selectedProject ? (
         <ProductDetailsModal
           project={selectedProject}

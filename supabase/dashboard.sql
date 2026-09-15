@@ -70,3 +70,37 @@ create trigger set_dashboard_widgets_updated_at
 
 create index if not exists dashboard_widgets_owner_position_idx
   on public.dashboard_widgets (owner_id, position);
+
+-- Bakgrunnsbilder for widgets (f.eks. nedtelling)
+insert into storage.buckets (id, name, public)
+values ('widget-images', 'widget-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Public can read widget images" on storage.objects;
+create policy "Public can read widget images"
+  on storage.objects
+  for select
+  to anon, authenticated
+  using (bucket_id = 'widget-images');
+
+drop policy if exists "Authenticated can upload widget images" on storage.objects;
+create policy "Authenticated can upload widget images"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (bucket_id = 'widget-images');
+
+drop policy if exists "Owners can update widget images" on storage.objects;
+create policy "Owners can update widget images"
+  on storage.objects
+  for update
+  to authenticated
+  using (bucket_id = 'widget-images')
+  with check (bucket_id = 'widget-images');
+
+drop policy if exists "Authenticated can delete widget images" on storage.objects;
+create policy "Authenticated can delete widget images"
+  on storage.objects
+  for delete
+  to authenticated
+  using (bucket_id = 'widget-images');

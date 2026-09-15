@@ -5,6 +5,8 @@ import type {
   WidgetType,
 } from "~/types/dashboard";
 
+const WIDGET_IMAGE_BUCKET = "widget-images";
+
 type WidgetRow = {
   id: string;
   owner_id: string;
@@ -16,6 +18,30 @@ type WidgetRow = {
 };
 
 const WIDGET_COLUMNS = "id, owner_id, type, size, position, data, created_at";
+
+export async function uploadWidgetImage(file: File): Promise<string> {
+  const supabase = getSupabaseClient();
+  const extension = file.name.includes(".")
+    ? (file.name.split(".").pop()?.toLowerCase() ?? "jpg")
+    : "jpg";
+  const filePath = `widgets/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(WIDGET_IMAGE_BUCKET)
+    .upload(filePath, file, {
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+  if (uploadError) {
+    throw new Error(`Klarte ikke laste opp bilde: ${uploadError.message}`);
+  }
+
+  const { data } = supabase.storage
+    .from(WIDGET_IMAGE_BUCKET)
+    .getPublicUrl(filePath);
+  return data.publicUrl;
+}
 
 function isWidgetType(value: string): value is WidgetType {
   return (

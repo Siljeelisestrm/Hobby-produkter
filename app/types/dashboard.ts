@@ -10,6 +10,7 @@ export type CounterWidgetData = {
 export type CountdownWidgetData = {
   label: string;
   targetDate: string;
+  imageUrl?: string;
 };
 
 export type NoteWidgetData = {

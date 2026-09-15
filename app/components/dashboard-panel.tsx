@@ -11,6 +11,7 @@ import {
   reorderDashboardWidgets,
   updateDashboardWidgetData,
   updateDashboardWidgetSize,
+  uploadWidgetImage,
 } from "~/lib/dashboard";
 import type {
   CounterWidgetData,
@@ -22,6 +23,7 @@ import type {
   WidgetType,
 } from "~/types/dashboard";
 import { WIDGET_TYPE_LABELS } from "~/types/dashboard";
+import { FiEdit2 } from "react-icons/fi";
 
 type DashboardPanelProps = {
   ownerId: string;
@@ -38,6 +40,9 @@ export function DashboardPanel({ ownerId }: DashboardPanelProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [uploadingImageWidgetId, setUploadingImageWidgetId] = useState<
+    string | null
+  >(null);
   const saveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   );
@@ -89,8 +94,7 @@ export function DashboardPanel({ ownerId }: DashboardPanelProps) {
 
     const timer = setTimeout(() => {
       void updateDashboardWidgetData(widgetId, data).catch((error) => {
-        const message =
-          error instanceof Error ? error.message : "Ukjent feil.";
+        const message = error instanceof Error ? error.message : "Ukjent feil.";
         setErrorMessage(message);
       });
       timers.delete(widgetId);
@@ -109,6 +113,29 @@ export function DashboardPanel({ ownerId }: DashboardPanelProps) {
       ),
     );
     scheduleSave(widgetId, data);
+  };
+
+  const handleCountdownImageSelected = async (
+    widget: DashboardWidget,
+    file: File,
+  ) => {
+    setUploadingImageWidgetId(widget.id);
+    setErrorMessage(null);
+    try {
+      const imageUrl = await uploadWidgetImage(file);
+      const nextData = { ...(widget.data as CountdownWidgetData), imageUrl };
+      setWidgets((current) =>
+        current.map((item) =>
+          item.id === widget.id ? { ...item, data: nextData } : item,
+        ),
+      );
+      await updateDashboardWidgetData(widget.id, nextData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Ukjent feil.";
+      setErrorMessage(message);
+    } finally {
+      setUploadingImageWidgetId(null);
+    }
   };
 
   const handleAddWidget = async (type: WidgetType, size: WidgetSize) => {
@@ -197,7 +224,7 @@ export function DashboardPanel({ ownerId }: DashboardPanelProps) {
           className={isEditing ? "primary-button" : "secondary-button"}
           onClick={() => setIsEditing((current) => !current)}
         >
-          {isEditing ? "Ferdig" : "Rediger"}
+          {isEditing ? "Ferdig" : <FiEdit2 />}
         </button>
         {isEditing ? (
           <button
@@ -282,7 +309,12 @@ export function DashboardPanel({ ownerId }: DashboardPanelProps) {
                 {widget.type === "countdown" ? (
                   <CountdownWidget
                     data={widget.data as CountdownWidgetData}
+                    isEditing={isEditing}
+                    isUploadingImage={uploadingImageWidgetId === widget.id}
                     onChange={(data) => handleWidgetDataChange(widget.id, data)}
+                    onImageFileSelected={(file) =>
+                      void handleCountdownImageSelected(widget, file)
+                    }
                   />
                 ) : null}
                 {widget.type === "note" ? (
