@@ -6,6 +6,7 @@ import { ProjectCard } from "~/components/project-card";
 import { useAuth } from "~/context/auth-context";
 import { fetchSharedProducts, toggleProductLike } from "~/lib/products";
 import type { ProjectItem } from "~/types/project";
+import { PiUsersThree } from "react-icons/pi";
 
 export default function Explore() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -108,7 +109,9 @@ export default function Explore() {
               aria-label="Se alle brukere"
               title="Se alle brukere"
             >
-              <span aria-hidden="true">👥</span>
+              <span aria-hidden="true">
+                <PiUsersThree />
+              </span>
             </Link>
           </div>
         </section>

@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #e1306c;
-  --color-primary-soft: #fde8ef;
-  --color-primary-strong: #bc2a8d;
+  --color-primary: #b8677d;
+  --color-primary-soft: #f6e4ea;
+  --color-primary-strong: #93495c;
   --color-on-primary: #ffffff;
 
-  --color-secondary: #fd5949;
-  --color-secondary-soft: #ffe7e3;
+  --color-secondary: #7c9885;
+  --color-secondary-soft: #e5eee7;
 
-  --color-tertiary: #0095f6;
-  --color-tertiary-soft: #e5f4ff;
-  --color-tertiary-strong: #0077c8;
+  --color-tertiary: #6b8cae;
+  --color-tertiary-soft: #e7eff6;
+  --color-tertiary-strong: #4c6b89;
 
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-soft: #ffffff;
   --color-text: #121212;
   --color-muted-text: #7a5e6b;
-  --color-border: #f2dfe8;
-  --color-border-strong: #eacddd;
+  --color-border: #ead9de;
+  --color-border-strong: #d9bec7;
 
   --color-header-bg: var(--color-surface);
   --color-header-border: var(--color-border);
@@ -36,10 +36,10 @@
 
   --color-danger: #b91c1c;
   --color-danger-soft: #fee2e2;
-  --color-success: #15803d;
+  --color-success: #5c8368;
 
   --color-overlay: rgba(88, 28, 62, 0.34);
-  --color-focus: #93c5fd;
+  --color-focus: #e3aab9;
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 16px 34px rgba(15, 23, 42, 0.16);
 
@@ -289,7 +289,7 @@ body {
 }
 
 .state-message.success {
-  color: var(--color-secondary);
+  color: var(--color-success);
 }
 
 .product-form-section {
@@ -618,7 +618,7 @@ body {
 @media (max-width: 760px) {
   .content--feed {
     width: 100%;
-    margin: 0 0 3rem;
+    margin: 1rem 0 3rem;
   }
 
   .content--feed .intro,
@@ -769,7 +769,11 @@ body {
 .users-summary {
   margin: 0 0 1rem;
   border: 1px solid var(--color-border-strong);
-  background: linear-gradient(135deg, #fff 0%, #fff2f8 100%);
+  background: linear-gradient(
+    160deg,
+    var(--color-primary-soft),
+    var(--color-secondary-soft)
+  );
   border-radius: 16px;
   padding: 0.7rem 0.9rem;
   display: flex;
@@ -788,7 +792,11 @@ body {
 .user-card {
   border: 1px solid var(--color-border-strong);
   border-radius: 18px;
-  background: linear-gradient(150deg, #ffffff 0%, #fff7fb 55%, #fff 100%);
+  background: linear-gradient(
+    160deg,
+    var(--color-primary-soft),
+    var(--color-secondary-soft)
+  );
   text-decoration: none;
   color: var(--color-text);
   display: flex;
@@ -1223,7 +1231,7 @@ body {
 }
 
 .modal-details {
-  padding: 1.5rem;
+  padding: 0.5rem;
 }
 
 .modal-heading h2 {
@@ -1834,6 +1842,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
+  align-items: start;
 }
 
 .stash-item-card {
@@ -1847,11 +1856,15 @@ body {
   padding: 0;
   text-align: left;
   box-shadow: var(--shadow-sm);
+  height: 100%;
 }
 
 .stash-item-card__image-wrapper {
   position: relative;
+  width: 100%;
   aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  overflow: hidden;
   background: var(--color-primary-soft);
 }
 
@@ -1878,6 +1891,9 @@ body {
 }
 
 .stash-item-card__content {
+  flex: 0 0 auto;
+  height: 3.7rem;
+  overflow: hidden;
   padding: 0.6rem 0.8rem 0.8rem;
 }
 
@@ -1886,12 +1902,20 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stash-item-card__meta {
   margin: 0;
   font-size: 0.8rem;
   color: var(--color-muted-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stash-item-form__preview {
@@ -1911,6 +1935,7 @@ body {
 
 .stash-item-modal {
   max-width: 480px;
+  padding: 1rem;
 }
 
 .stash-item-modal__image {
