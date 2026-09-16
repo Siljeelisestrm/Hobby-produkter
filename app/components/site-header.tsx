@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GiSewingString } from "react-icons/gi";
-import { NavLink } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "~/context/auth-context";
 import { signOut } from "~/lib/auth";
 import { CgProfile } from "react-icons/cg";
@@ -105,9 +104,9 @@ export function SiteHeader() {
 
         {user ? (
           <div className="site-user">
-            <span className="site-user__name">
+            <Link to="/profil" className="site-user__name" title="Min profil">
               {profile?.username ?? user.email}
-            </span>
+            </Link>
             <button
               type="button"
               className="secondary-button site-user__logout"

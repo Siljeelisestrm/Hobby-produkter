@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AddProductForm } from "~/components/add-product-form";
 import { AuthForm } from "~/components/auth-form";
 import { DashboardPanel } from "~/components/dashboard-panel";
@@ -281,7 +281,6 @@ export default function Home() {
     return (
       <main className="content">
         <section className="intro">
-          <h1>Min side</h1>
           <p>Logg inn for å se og administrere dine private produkter.</p>
         </section>
         <AuthForm />
@@ -294,7 +293,28 @@ export default function Home() {
       <main className="content" aria-label="Min side">
         <section className="intro">
           <div className="intro-top">
-            <h1>Min side</h1>
+            <div className="intro-title-group">
+              <Link
+                to="/profil"
+                className="user-avatar-button"
+                aria-label="Min profil og innstillinger"
+                title="Min profil"
+              >
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt=""
+                    className="user-avatar-button__image"
+                  />
+                ) : (
+                  <span className="user-avatar-button__placeholder">
+                    {profile?.username
+                      ? profile.username.slice(0, 1).toUpperCase()
+                      : "👤"}
+                  </span>
+                )}
+              </Link>
+            </div>
 
             <div className="view-toggle" role="tablist" aria-label="Visning">
               <button

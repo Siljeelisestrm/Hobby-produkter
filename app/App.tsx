@@ -1,13 +1,15 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
-import { AuthProvider } from "~/context/auth-context";
+import { AuthProvider, useAuth } from "~/context/auth-context";
 import ExplorePage from "~/routes/explore";
 import HomePage from "~/routes/home";
+import ProfilePage from "~/routes/profile";
 import StashPage from "~/routes/stash";
 import UserProfilePage from "~/routes/user-profile";
 import UsersPage from "~/routes/users";
 import { SiteHeader } from "~/components/site-header";
+import { SplashScreen } from "~/components/splash-screen";
 import "./app.css";
 
 const routeMeta: Record<string, { title: string; description: string }> = {
@@ -26,6 +28,10 @@ const routeMeta: Record<string, { title: string; description: string }> = {
   "/brukere": {
     title: "Brukere | Hjemmelagde Ting",
     description: "Utforsk brukere og deres delte produkter.",
+  },
+  "/profil": {
+    title: "Min profil | Hjemmelagde Ting",
+    description: "Se din profil, brukerdetaljer og logg ut.",
   },
 };
 
@@ -55,22 +61,31 @@ function DocumentMeta() {
   return null;
 }
 
+function AppShell() {
+  const { isLoading } = useAuth();
+
+  return (
+    <div className="page">
+      <SplashScreen isLoading={isLoading} />
+      <DocumentMeta />
+      <SiteHeader />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/utforsk" element={<ExplorePage />} />
+        <Route path="/bibliotek" element={<StashPage />} />
+        <Route path="/profil" element={<ProfilePage />} />
+        <Route path="/profil/:username" element={<UserProfilePage />} />
+        <Route path="/brukere" element={<UsersPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <div className="page">
-        <DocumentMeta />
-        <SiteHeader />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/utforsk" element={<ExplorePage />} />
-          <Route path="/bibliotek" element={<StashPage />} />
-          <Route path="/profil" element={<Navigate to="/" replace />} />
-          <Route path="/profil/:username" element={<UserProfilePage />} />
-          <Route path="/brukere" element={<UsersPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      <AppShell />
     </AuthProvider>
   );
 }

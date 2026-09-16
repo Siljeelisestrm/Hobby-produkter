@@ -233,3 +233,65 @@ export async function fetchPublicProfiles(): Promise<PublicProfileSummary[]> {
     sharedCount: sharedCountByOwnerId.get(row.id) ?? 0,
   }));
 }
+
+export async function updateUserProfile(
+  userId: string,
+  input: {
+    username?: string;
+    bio?: string;
+    avatarFile?: File;
+  },
+): Promise<UserProfile> {
+  const supabase = getSupabaseClient();
+  let avatarUrl: string | undefined;
+
+  if (input.avatarFile && input.avatarFile.size > 0) {
+    const compressedAvatar = await compressImageFile(input.avatarFile, {
+      maxDimension: 800,
+    });
+    const extension = compressedAvatar.name.includes(".")
+      ? compressedAvatar.name.split(".").pop()?.toLowerCase() ?? "jpg"
+      : "jpg";
+    const filePath = `avatars/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PROFILE_IMAGE_BUCKET)
+      .upload(filePath, compressedAvatar, {
+        upsert: false,
+        contentType: compressedAvatar.type || undefined,
+      });
+
+    if (uploadError) {
+      throw new Error(`Klarte ikke laste opp profilbilde: ${uploadError.message}`);
+    }
+
+    const { data } = supabase.storage
+      .from(PROFILE_IMAGE_BUCKET)
+      .getPublicUrl(filePath);
+    avatarUrl = data.publicUrl;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (input.username !== undefined) {
+    updates.username = input.username.trim();
+  }
+  if (input.bio !== undefined) {
+    updates.bio = input.bio.trim() || null;
+  }
+  if (avatarUrl !== undefined) {
+    updates.avatar_url = avatarUrl;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", userId)
+    .select("id, username, bio, avatar_url")
+    .single();
+
+  if (error) {
+    throw new Error(`Klarte ikke oppdatere profil: ${error.message}`);
+  }
+
+  return mapProfile(data as ProfileRow);
+}
