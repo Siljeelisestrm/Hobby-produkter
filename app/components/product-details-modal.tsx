@@ -452,7 +452,7 @@ export function ProductDetailsModal({
                 <label className="form-field">
                   Kort beskrivelse (valgfritt)
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     disabled={isUpdating}
@@ -462,7 +462,7 @@ export function ProductDetailsModal({
                 <label className="form-field">
                   Ekstra detaljer
                   <textarea
-                    rows={4}
+                    rows={2}
                     value={details}
                     onChange={(event) => setDetails(event.target.value)}
                     disabled={isUpdating}

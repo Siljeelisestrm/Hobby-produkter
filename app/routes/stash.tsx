@@ -173,7 +173,9 @@ export default function Stash() {
     setDeleteErrorMessage(null);
     try {
       await deleteStashItem(selectedItem.id);
-      setItems((current) => current.filter((item) => item.id !== selectedItem.id));
+      setItems((current) =>
+        current.filter((item) => item.id !== selectedItem.id),
+      );
       setSelectedItem(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ukjent feil.";
@@ -220,12 +222,16 @@ export default function Stash() {
             </button>
           </div>
           <p>
-            Oversikt over garn, stoff, perler og annet du har liggende. Total
-            verdi: {totalValue} kr.
+            Oversikt over alt du har liggende. <br />
+            Total verdi: {totalValue} kr.
           </p>
         </section>
 
-        <div className="stash-category-tabs" role="tablist" aria-label="Kategori">
+        <div
+          className="stash-category-tabs"
+          role="tablist"
+          aria-label="Kategori"
+        >
           <button
             type="button"
             role="tab"
@@ -257,7 +263,9 @@ export default function Stash() {
           ))}
         </div>
 
-        {isLoading ? <p className="state-message">Laster biblioteket...</p> : null}
+        {isLoading ? (
+          <p className="state-message">Laster biblioteket...</p>
+        ) : null}
         {errorMessage ? (
           <p className="state-message error">{errorMessage}</p>
         ) : null}
@@ -268,7 +276,10 @@ export default function Stash() {
           </p>
         ) : null}
 
-        {!isLoading && !errorMessage && items.length > 0 && filteredItems.length === 0 ? (
+        {!isLoading &&
+        !errorMessage &&
+        items.length > 0 &&
+        filteredItems.length === 0 ? (
           <p className="state-message">Ingen ting i denne kategorien enda.</p>
         ) : null}
 

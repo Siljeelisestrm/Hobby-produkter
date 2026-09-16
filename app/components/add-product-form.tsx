@@ -116,14 +116,14 @@ export function AddProductForm({
           Kort beskrivelse (valgfritt)
           <textarea
             name="description"
-            rows={3}
+            rows={2}
             disabled={isSubmitting}
           />
         </label>
 
         <label className="form-field">
           Ekstra detaljer
-          <textarea name="details" rows={4} disabled={isSubmitting} />
+          <textarea name="details" rows={2} disabled={isSubmitting} />
         </label>
 
         <label className="form-field">
