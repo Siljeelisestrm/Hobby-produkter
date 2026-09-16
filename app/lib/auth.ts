@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { compressImageFile } from "~/lib/image";
 import { getSupabaseClient } from "~/lib/supabase";
 
 const PROFILE_IMAGE_BUCKET = "profile-images";
@@ -45,20 +46,26 @@ export async function signUpWithEmail(input: {
   let avatarUrl: string | null = null;
 
   if (input.avatarFile && input.avatarFile.size > 0) {
-    const extension = input.avatarFile.name.includes(".")
-      ? input.avatarFile.name.split(".").pop()?.toLowerCase() ?? "jpg"
+    //Komprimerer bilder
+    const compressedAvatar = await compressImageFile(input.avatarFile, {
+      maxDimension: 800,
+    });
+    const extension = compressedAvatar.name.includes(".")
+      ? (compressedAvatar.name.split(".").pop()?.toLowerCase() ?? "jpg")
       : "jpg";
     const filePath = `avatars/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from(PROFILE_IMAGE_BUCKET)
-      .upload(filePath, input.avatarFile, {
+      .upload(filePath, compressedAvatar, {
         upsert: false,
-        contentType: input.avatarFile.type || undefined,
+        contentType: compressedAvatar.type || undefined,
       });
 
     if (uploadError) {
-      throw new Error(`Klarte ikke laste opp profilbilde: ${uploadError.message}`);
+      throw new Error(
+        `Klarte ikke laste opp profilbilde: ${uploadError.message}`,
+      );
     }
 
     const { data } = supabase.storage
@@ -107,7 +114,9 @@ export async function signOut(): Promise<void> {
   }
 }
 
-export async function fetchProfile(userId: string): Promise<UserProfile | null> {
+export async function fetchProfile(
+  userId: string,
+): Promise<UserProfile | null> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("profiles")
@@ -186,18 +195,25 @@ export async function upsertProfile(
 
 export async function fetchPublicProfiles(): Promise<PublicProfileSummary[]> {
   const supabase = getSupabaseClient();
-  const [{ data: profileRows, error: profileError }, { data: sharedRows, error: sharedError }] =
-    await Promise.all([
-      supabase.from("profiles").select("id, username, bio, avatar_url").order("username"),
-      supabase.from("products").select("owner_id").eq("is_shared", true),
-    ]);
+  const [
+    { data: profileRows, error: profileError },
+    { data: sharedRows, error: sharedError },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, username, bio, avatar_url")
+      .order("username"),
+    supabase.from("products").select("owner_id").eq("is_shared", true),
+  ]);
 
   if (profileError) {
     throw new Error(`Klarte ikke hente profiler: ${profileError.message}`);
   }
 
   if (sharedError) {
-    throw new Error(`Klarte ikke hente delte produkter: ${sharedError.message}`);
+    throw new Error(
+      `Klarte ikke hente delte produkter: ${sharedError.message}`,
+    );
   }
 
   const sharedCountByOwnerId = new Map<string, number>();

@@ -1,3 +1,4 @@
+import { compressImageFile } from "~/lib/image";
 import { getSupabaseClient } from "~/lib/supabase";
 import type { ProjectItem, ProjectStatus } from "~/types/project";
 
@@ -135,16 +136,17 @@ function mapProductRow(row: ProductRow): ProjectItem {
 
 async function uploadProductImage(file: File): Promise<string> {
   const supabase = getSupabaseClient();
-  const extension = file.name.includes(".")
-    ? file.name.split(".").pop()?.toLowerCase() ?? "jpg"
+  const compressedFile = await compressImageFile(file);
+  const extension = compressedFile.name.includes(".")
+    ? compressedFile.name.split(".").pop()?.toLowerCase() ?? "jpg"
     : "jpg";
   const filePath = `products/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
   const { error: uploadError } = await supabase.storage
     .from(PRODUCT_IMAGE_BUCKET)
-    .upload(filePath, file, {
+    .upload(filePath, compressedFile, {
       upsert: false,
-      contentType: file.type || undefined,
+      contentType: compressedFile.type || undefined,
     });
 
   if (uploadError) {
